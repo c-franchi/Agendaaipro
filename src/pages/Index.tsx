@@ -11,40 +11,29 @@ import haircut3 from "@/assets/haircut3.jpg";
 import haircut4 from "@/assets/haircut4.jpg";
 import beard1 from "@/assets/beard1.jpg";
 import shave1 from "@/assets/shave1.jpg";
-
 const Index = () => {
   const [barber, setBarber] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
-
   useEffect(() => {
     loadData();
   }, []);
-
   async function loadData() {
-    const { data: barberData } = await supabase
-      .from("barber_profile")
-      .select("*")
-      .single();
-    
-    const { data: servicesData } = await supabase
-      .from("services")
-      .select("*")
-      .eq("is_active", true);
-    
+    const {
+      data: barberData
+    } = await supabase.from("barber_profile").select("*").single();
+    const {
+      data: servicesData
+    } = await supabase.from("services").select("*").eq("is_active", true);
     setBarber(barberData);
     setServices(servicesData || []);
   }
-
   const galleryImages = [haircut1, haircut2, haircut3, haircut4, beard1, shave1];
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative h-screen">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        >
+        <div className="absolute inset-0 bg-cover bg-center" style={{
+        backgroundImage: `url(${heroImage})`
+      }}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
         </div>
         
@@ -61,7 +50,7 @@ const Index = () => {
             {barber?.name || "Ricardo Silva"}
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl">
+          <p className="text-xl md:text-2xl mb-8 max-w-2xl text-slate-50">
             {barber?.bio || "Barbeiro profissional especializado em cortes clássicos e modernos"}
           </p>
           
@@ -99,18 +88,9 @@ const Index = () => {
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {galleryImages.map((img, idx) => (
-              <div
-                key={idx}
-                className="aspect-square overflow-hidden rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer"
-              >
-                <img
-                  src={img}
-                  alt={`Trabalho ${idx + 1}`}
-                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                />
-              </div>
-            ))}
+            {galleryImages.map((img, idx) => <div key={idx} className="aspect-square overflow-hidden rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer">
+                <img src={img} alt={`Trabalho ${idx + 1}`} className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" />
+              </div>)}
           </div>
         </div>
       </section>
@@ -123,16 +103,14 @@ const Index = () => {
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {services.map((service) => (
-              <Card key={service.id} className="p-6 text-center bg-card border-border hover:border-primary transition-colors">
+            {services.map(service => <Card key={service.id} className="p-6 text-center bg-card border-border hover:border-primary transition-colors">
                 <h3 className="text-2xl font-bold mb-2 text-foreground">{service.name}</h3>
                 <p className="text-muted-foreground mb-4">{service.description}</p>
                 <p className="text-sm text-muted-foreground mb-2">{service.duration_min} minutos</p>
                 <p className="text-3xl font-bold text-primary">
                   R$ {parseFloat(service.price).toFixed(2)}
                 </p>
-              </Card>
-            ))}
+              </Card>)}
           </div>
           
           <div className="text-center mt-12">
@@ -149,12 +127,10 @@ const Index = () => {
       <footer className="bg-card py-8 border-t border-border">
         <div className="container mx-auto px-4 text-center">
           <div className="flex justify-center gap-4 mb-4">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" 
-               className="text-muted-foreground hover:text-primary transition-colors">
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <Instagram className="w-6 h-6" />
             </a>
-            <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer"
-               className="text-muted-foreground hover:text-primary transition-colors">
+            <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
               <Phone className="w-6 h-6" />
             </a>
           </div>
@@ -163,8 +139,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
