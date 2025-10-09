@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { generateBookingToken } from "@/utils/token";
+import { scheduleNotification } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -120,6 +121,9 @@ export default function Agendar() {
         .single();
 
       if (error) throw error;
+
+      // Agendar notificação de lembrete
+      scheduleNotification(dateStr, selectedTime, customerName);
 
       toast.success("Agendamento criado! Você receberá uma mensagem no WhatsApp.");
       

@@ -17,6 +17,7 @@ const Index = () => {
   useEffect(() => {
     loadData();
   }, []);
+  
   async function loadData() {
     const {
       data: barberData
@@ -26,6 +27,13 @@ const Index = () => {
     } = await supabase.from("services").select("*").eq("is_active", true);
     setBarber(barberData);
     setServices(servicesData || []);
+    
+    // Atualizar título da página
+    if (barberData?.name) {
+      document.title = barberData.name;
+      const titleEl = document.getElementById('page-title');
+      if (titleEl) titleEl.textContent = barberData.name;
+    }
   }
   const galleryImages = [haircut1, haircut2, haircut3, haircut4, beard1, shave1];
   return <div className="min-h-screen bg-background">
