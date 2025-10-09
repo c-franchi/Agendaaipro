@@ -30,7 +30,6 @@ export function showNotification(title: string, body: string) {
         body,
         icon: 'https://storage.googleapis.com/gpt-engineer-file-uploads/PHfEygLl96PVOoKNyvcTx1Nu69z1/uploads/1759934031239-barber.png',
         badge: 'https://storage.googleapis.com/gpt-engineer-file-uploads/PHfEygLl96PVOoKNyvcTx1Nu69z1/uploads/1759934031239-barber.png',
-        vibrate: [200, 100, 200],
       });
     });
   }
