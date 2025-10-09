@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, isSameDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface Block {
   id: string;
@@ -20,9 +21,24 @@ interface Block {
   reason: string;
 }
 
+interface Booking {
+  id: string;
+  booking_date: string;
+  booking_time: string;
+  customer_name: string;
+  customer_whatsapp: string;
+  status: string;
+  service_id: string;
+  services?: {
+    name: string;
+  };
+}
+
 export default function Agenda() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newBlock, setNewBlock] = useState({
     start_datetime: "",
@@ -32,7 +48,8 @@ export default function Agenda() {
 
   useEffect(() => {
     fetchBlocks();
-  }, []);
+    fetchBookings();
+  }, [currentMonth]);
 
   async function fetchBlocks() {
     const { data, error } = await supabase
@@ -46,6 +63,29 @@ export default function Agenda() {
     }
 
     setBlocks(data || []);
+  }
+
+  async function fetchBookings() {
+    const startDate = startOfMonth(currentMonth);
+    const endDate = endOfMonth(currentMonth);
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(`
+        *,
+        services(name)
+      `)
+      .gte("booking_date", format(startDate, "yyyy-MM-dd"))
+      .lte("booking_date", format(endDate, "yyyy-MM-dd"))
+      .order("booking_date", { ascending: true })
+      .order("booking_time", { ascending: true });
+
+    if (error) {
+      toast.error("Erro ao carregar agendamentos");
+      return;
+    }
+
+    setBookings(data || []);
   }
 
   async function handleCreateBlock() {
@@ -83,11 +123,57 @@ export default function Agenda() {
     fetchBlocks();
   }
 
+  function getStatusBadge(status: string) {
+    const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
+      PENDING_PAYMENT: { variant: "outline", label: "Pendente" },
+      CONFIRMED: { variant: "default", label: "Confirmado" },
+      COMPLETED: { variant: "secondary", label: "Concluído" },
+      CANCELLED: { variant: "destructive", label: "Cancelado" },
+    };
+    const config = variants[status] || { variant: "outline" as const, label: status };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  }
+
+  function getBookingsForDate(date: Date) {
+    return bookings.filter((booking) =>
+      isSameDay(new Date(booking.booking_date), date)
+    );
+  }
+
+  function getDaysWithBookings() {
+    return bookings.map((booking) => new Date(booking.booking_date));
+  }
+
+  const selectedDateBookings = getBookingsForDate(selectedDate);
+
+  function handlePreviousMonth() {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentMonth(newDate);
+  }
+
+  function handleNextMonth() {
+    const newDate = new Date(currentMonth);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentMonth(newDate);
+  }
+
+  function handleToday() {
+    const today = new Date();
+    setCurrentMonth(today);
+    setSelectedDate(today);
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
+            <p className="text-muted-foreground mt-1">
+              Gerencie seus agendamentos e bloqueios
+            </p>
+          </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -141,57 +227,90 @@ export default function Agenda() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Calendar View */}
+          <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Calendário</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarIcon className="w-5 h-5" />
+                  {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+                </CardTitle>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleToday}>
+                    Hoje
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handlePreviousMonth}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleNextMonth}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="flex justify-center">
+            <CardContent>
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={(date) => date && setSelectedDate(date)}
                 locale={ptBR}
-                className="rounded-md border"
+                month={currentMonth}
+                onMonthChange={setCurrentMonth}
+                className="rounded-md border w-full"
+                modifiers={{
+                  booked: getDaysWithBookings(),
+                }}
+                modifiersClassNames={{
+                  booked: "bg-primary/10 font-bold",
+                }}
               />
+              <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-primary/10 border border-primary/20" />
+                  <span>Dias com agendamentos</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
+          {/* Selected Day Bookings */}
           <Card>
             <CardHeader>
-              <CardTitle>Bloqueios Ativos</CardTitle>
+              <CardTitle>
+                {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {selectedDateBookings.length} agendamento(s)
+              </p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {blocks.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">
-                    Nenhum bloqueio ativo
+                {selectedDateBookings.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8 text-sm">
+                    Nenhum agendamento neste dia
                   </p>
                 ) : (
-                  blocks.map((block) => (
+                  selectedDateBookings.map((booking) => (
                     <div
-                      key={block.id}
-                      className="flex items-start justify-between p-4 border rounded-lg"
+                      key={booking.id}
+                      className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex-1">
-                        <p className="font-medium">{block.reason}</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {format(new Date(block.start_datetime), "dd/MM/yyyy HH:mm", {
-                            locale: ptBR,
-                          })}{" "}
-                          até{" "}
-                          {format(new Date(block.end_datetime), "dd/MM/yyyy HH:mm", {
-                            locale: ptBR,
-                          })}
-                        </p>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">
+                            {booking.booking_time.slice(0, 5)}
+                          </span>
+                          {getStatusBadge(booking.status)}
+                        </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteBlock(block.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
+                      <p className="font-medium">{booking.customer_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {booking.services?.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {booking.customer_whatsapp}
+                      </p>
                     </div>
                   ))
                 )}
@@ -199,6 +318,49 @@ export default function Agenda() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Blocks Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bloqueios Ativos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {blocks.length === 0 ? (
+                <p className="text-muted-foreground text-center py-4 col-span-full">
+                  Nenhum bloqueio ativo
+                </p>
+              ) : (
+                blocks.map((block) => (
+                  <div
+                    key={block.id}
+                    className="flex items-start justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium">{block.reason}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {format(new Date(block.start_datetime), "dd/MM/yyyy HH:mm", {
+                          locale: ptBR,
+                        })}{" "}
+                        até{" "}
+                        {format(new Date(block.end_datetime), "dd/MM/yyyy HH:mm", {
+                          locale: ptBR,
+                        })}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteBlock(block.id)}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );
