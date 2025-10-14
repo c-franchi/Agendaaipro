@@ -14,6 +14,8 @@ import shave1 from "@/assets/shave1.jpg";
 const Index = () => {
   const [barber, setBarber] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
     loadData();
   }, []);
@@ -27,6 +29,7 @@ const Index = () => {
     } = await supabase.from("services").select("*").eq("is_active", true);
     setBarber(barberData);
     setServices(servicesData || []);
+    setLoading(false);
     
     // Atualizar título da página
     if (barberData?.name) {
@@ -36,6 +39,15 @@ const Index = () => {
     }
   }
   const galleryImages = [haircut1, haircut2, haircut3, haircut4, beard1, shave1];
+  
+  if (loading) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+      </div>
+    </div>;
+  }
+  
   return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative h-screen">
@@ -55,11 +67,11 @@ const Index = () => {
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-4 text-foreground">
-            {barber?.name || "Ricardo Silva"}
+            {barber?.name || "Barbearia"}
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 max-w-2xl text-slate-50">
-            {barber?.bio || "Barbeiro profissional especializado em cortes clássicos e modernos"}
+            {barber?.bio || "Profissional especializado em cortes clássicos e modernos"}
           </p>
           
           <div className="flex flex-wrap justify-center gap-4 mb-8">
