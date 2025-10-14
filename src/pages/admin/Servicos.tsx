@@ -11,6 +11,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
+interface InterleavedBlock {
+  start_min: number;
+  duration_min: number;
+  blocked: boolean;
+}
+
 interface Service {
   id: string;
   name: string;
@@ -18,6 +24,7 @@ interface Service {
   duration_min: number;
   price: number;
   is_active: boolean;
+  interleaved_blocks: InterleavedBlock[] | null;
 }
 
 export default function Servicos() {
@@ -30,7 +37,9 @@ export default function Servicos() {
     duration_min: 30,
     price: 0,
     is_active: true,
+    interleaved_blocks: null as InterleavedBlock[] | null,
   });
+  const [enableInterleaved, setEnableInterleaved] = useState(false);
 
   useEffect(() => {
     fetchServices();
@@ -47,7 +56,7 @@ export default function Servicos() {
       return;
     }
 
-    setServices(data || []);
+    setServices((data || []) as unknown as Service[]);
   }
 
   function openDialog(service?: Service) {
@@ -59,7 +68,9 @@ export default function Servicos() {
         duration_min: service.duration_min,
         price: Number(service.price),
         is_active: service.is_active,
+        interleaved_blocks: service.interleaved_blocks,
       });
+      setEnableInterleaved(!!service.interleaved_blocks);
     } else {
       setEditingService(null);
       setFormData({
@@ -68,9 +79,35 @@ export default function Servicos() {
         duration_min: 30,
         price: 0,
         is_active: true,
+        interleaved_blocks: null,
       });
+      setEnableInterleaved(false);
     }
     setDialogOpen(true);
+  }
+
+  function generateInterleavedBlocks() {
+    const totalDuration = formData.duration_min;
+    const blockSize = 30; // blocos de 30 minutos
+    const blocks: InterleavedBlock[] = [];
+    
+    for (let i = 0; i < totalDuration; i += blockSize) {
+      blocks.push({
+        start_min: i,
+        duration_min: Math.min(blockSize, totalDuration - i),
+        blocked: true,
+      });
+    }
+    
+    setFormData({ ...formData, interleaved_blocks: blocks });
+  }
+
+  function updateBlockStatus(index: number, blocked: boolean) {
+    if (!formData.interleaved_blocks) return;
+    
+    const updated = [...formData.interleaved_blocks];
+    updated[index] = { ...updated[index], blocked };
+    setFormData({ ...formData, interleaved_blocks: updated });
   }
 
   async function handleSaveService() {
@@ -79,10 +116,19 @@ export default function Servicos() {
       return;
     }
 
+    const dataToSave = {
+      name: formData.name,
+      description: formData.description,
+      duration_min: formData.duration_min,
+      price: formData.price,
+      is_active: formData.is_active,
+      interleaved_blocks: enableInterleaved ? (formData.interleaved_blocks as any) : null,
+    };
+
     if (editingService) {
       const { error } = await supabase
         .from("services")
-        .update(formData)
+        .update(dataToSave)
         .eq("id", editingService.id);
 
       if (error) {
@@ -92,7 +138,7 @@ export default function Servicos() {
 
       toast.success("Serviço atualizado!");
     } else {
-      const { error } = await supabase.from("services").insert(formData);
+      const { error } = await supabase.from("services").insert(dataToSave);
 
       if (error) {
         toast.error("Erro ao criar serviço");
@@ -199,6 +245,72 @@ export default function Servicos() {
                   />
                   <Label htmlFor="active">Ativo</Label>
                 </div>
+
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="interleaved"
+                      checked={enableInterleaved}
+                      onCheckedChange={(checked) => {
+                        setEnableInterleaved(checked);
+                        if (checked && !formData.interleaved_blocks) {
+                          generateInterleavedBlocks();
+                        }
+                      }}
+                    />
+                    <Label htmlFor="interleaved">
+                      Bloqueios Intercalados
+                    </Label>
+                  </div>
+                  
+                  {enableInterleaved && (
+                    <div className="space-y-2 bg-muted p-4 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Configure os períodos em que você estará disponível para atender outros clientes durante este serviço (ex: tempo de pausa da tinta):
+                      </p>
+                      
+                      {!formData.interleaved_blocks ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={generateInterleavedBlocks}
+                        >
+                          Gerar Blocos
+                        </Button>
+                      ) : (
+                        <div className="space-y-2">
+                          {formData.interleaved_blocks.map((block, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-background p-2 rounded">
+                              <span className="text-sm">
+                                {block.start_min} - {block.start_min + block.duration_min} min
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">
+                                  {block.blocked ? "Bloqueado" : "Disponível"}
+                                </span>
+                                <Switch
+                                  checked={!block.blocked}
+                                  onCheckedChange={(checked) => 
+                                    updateBlockStatus(idx, !checked)
+                                  }
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={generateInterleavedBlocks}
+                            className="w-full"
+                          >
+                            Regenerar Blocos
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <Button onClick={handleSaveService} className="w-full">
                   {editingService ? "Salvar Alterações" : "Criar Serviço"}
                 </Button>
@@ -236,6 +348,26 @@ export default function Servicos() {
                     R$ {Number(service.price).toFixed(2)}
                   </span>
                 </div>
+                {service.interleaved_blocks && (
+                  <div className="bg-muted p-2 rounded text-xs space-y-1">
+                    <p className="font-medium text-foreground">Bloqueios Intercalados:</p>
+                    <div className="flex gap-1 flex-wrap">
+                      {service.interleaved_blocks.map((block, idx) => (
+                        <span
+                          key={idx}
+                          className={`px-2 py-1 rounded ${
+                            block.blocked
+                              ? "bg-destructive/20 text-destructive"
+                              : "bg-primary/20 text-primary"
+                          }`}
+                        >
+                          {block.start_min}-{block.start_min + block.duration_min}min{" "}
+                          {block.blocked ? "🔒" : "✓"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-2 pt-2">
                   <Button
                     variant="outline"

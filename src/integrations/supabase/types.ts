@@ -195,6 +195,7 @@ export type Database = {
           description: string | null
           duration_min: number
           id: string
+          interleaved_blocks: Json | null
           is_active: boolean | null
           name: string
           price: number
@@ -204,6 +205,7 @@ export type Database = {
           description?: string | null
           duration_min: number
           id?: string
+          interleaved_blocks?: Json | null
           is_active?: boolean | null
           name: string
           price: number
@@ -213,6 +215,7 @@ export type Database = {
           description?: string | null
           duration_min?: number
           id?: string
+          interleaved_blocks?: Json | null
           is_active?: boolean | null
           name?: string
           price?: number

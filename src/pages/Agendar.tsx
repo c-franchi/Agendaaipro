@@ -61,12 +61,74 @@ export default function Agendar() {
       return;
     }
 
-    // Buscar agendamentos do dia
+    // Buscar agendamentos do dia com informações do serviço
     const { data: bookings } = await supabase
       .from("bookings")
-      .select("booking_time")
+      .select("booking_time, service_id, services(duration_min, interleaved_blocks)")
       .eq("booking_date", dateStr)
       .in("status", ["PENDING_PAYMENT", "CONFIRMED"]);
+
+    // Função auxiliar para verificar conflito entre horários
+    function hasConflict(newTime: string, newService: any): boolean {
+      if (!bookings) return false;
+
+      const newTimeMin = timeToMinutes(newTime);
+      const newBlocks = getOccupiedBlocks(newTimeMin, newService);
+
+      for (const booking of bookings) {
+        const bookingTimeMin = timeToMinutes(booking.booking_time);
+        const bookingService = (booking as any).services;
+        const bookingBlocks = getOccupiedBlocks(bookingTimeMin, bookingService);
+
+        // Verificar sobreposição entre blocos ocupados
+        for (const newBlock of newBlocks) {
+          for (const existingBlock of bookingBlocks) {
+            if (blocksOverlap(newBlock, existingBlock)) {
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
+    }
+
+    // Converter string de tempo para minutos desde meia-noite
+    function timeToMinutes(time: string): number {
+      const [hour, min] = time.split(':').map(Number);
+      return hour * 60 + min;
+    }
+
+    // Obter blocos de tempo ocupados para um agendamento
+    function getOccupiedBlocks(startMin: number, service: any): Array<{start: number, end: number}> {
+      const blocks: Array<{start: number, end: number}> = [];
+      
+      if (service?.interleaved_blocks) {
+        // Serviço com bloqueios intercalados
+        const interleavedBlocks = service.interleaved_blocks as any[];
+        for (const block of interleavedBlocks) {
+          if (block.blocked) {
+            blocks.push({
+              start: startMin + block.start_min,
+              end: startMin + block.start_min + block.duration_min
+            });
+          }
+        }
+      } else {
+        // Serviço normal - ocupa todo o tempo
+        blocks.push({
+          start: startMin,
+          end: startMin + (service?.duration_min || 0)
+        });
+      }
+      
+      return blocks;
+    }
+
+    // Verificar se dois blocos se sobrepõem
+    function blocksOverlap(block1: {start: number, end: number}, block2: {start: number, end: number}): boolean {
+      return block1.start < block2.end && block2.start < block1.end;
+    }
 
     // Gerar slots
     const slots: string[] = [];
@@ -81,9 +143,8 @@ export default function Agendar() {
       const min = currentMin % 60;
       const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
       
-      // Verificar se não está ocupado
-      const isBooked = bookings?.some(b => b.booking_time === timeStr);
-      if (!isBooked) {
+      // Verificar se não há conflito
+      if (!hasConflict(timeStr, selectedService)) {
         slots.push(timeStr);
       }
       
