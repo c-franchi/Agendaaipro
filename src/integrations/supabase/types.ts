@@ -189,6 +189,118 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          archived: boolean | null
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_whatsapp: string
+          id: string
+          last_message_at: string | null
+          unread_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_whatsapp: string
+          id?: string
+          last_message_at?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_whatsapp?: string
+          id?: string
+          last_message_at?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          sender_type: string
+          status: string | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          sender_type: string
+          status?: string | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          sender_type?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_notifications: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          id: string
+          message: string
+          notification_type: string
+          scheduled_for: string
+          sent_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          message: string
+          notification_type: string
+          scheduled_for: string
+          sent_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string
+          notification_type?: string
+          scheduled_for?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_notifications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           created_at: string | null
