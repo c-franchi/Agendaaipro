@@ -264,39 +264,68 @@ export default function Servicos() {
                   </div>
                   
                   {enableInterleaved && (
-                    <div className="space-y-2 bg-muted p-4 rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Configure os períodos em que você estará disponível para atender outros clientes durante este serviço (ex: tempo de pausa da tinta):
-                      </p>
+                    <div className="space-y-3 bg-muted p-4 rounded-lg">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-foreground">
+                          ⏱️ Bloqueios Intercalados
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Durante serviços como pintura, você pode estar <span className="text-primary font-medium">disponível</span> em alguns períodos (ex: enquanto a tinta age).
+                          Configure abaixo quando você poderá atender outros clientes:
+                        </p>
+                      </div>
                       
                       {!formData.interleaved_blocks ? (
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={generateInterleavedBlocks}
+                          className="w-full"
                         >
-                          Gerar Blocos
+                          Gerar Timeline
                         </Button>
                       ) : (
-                        <div className="space-y-2">
-                          {formData.interleaved_blocks.map((block, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-background p-2 rounded">
-                              <span className="text-sm">
-                                {block.start_min} - {block.start_min + block.duration_min} min
-                              </span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
-                                  {block.blocked ? "Bloqueado" : "Disponível"}
-                                </span>
-                                <Switch
-                                  checked={!block.blocked}
-                                  onCheckedChange={(checked) => 
-                                    updateBlockStatus(idx, !checked)
-                                  }
-                                />
-                              </div>
+                        <div className="space-y-3">
+                          <div className="bg-background p-3 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between text-xs mb-2">
+                              <span className="text-muted-foreground">Timeline do Serviço</span>
+                              <span className="text-muted-foreground">Total: {formData.duration_min} min</span>
                             </div>
-                          ))}
+                            
+                            {formData.interleaved_blocks.map((block, idx) => (
+                              <div key={idx} className="space-y-1">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${block.blocked ? 'bg-destructive' : 'bg-primary'}`} />
+                                    <span className="text-sm font-medium">
+                                      {block.start_min} - {block.start_min + block.duration_min} min
+                                    </span>
+                                  </div>
+                                  <Switch
+                                    checked={!block.blocked}
+                                    onCheckedChange={(checked) => 
+                                      updateBlockStatus(idx, !checked)
+                                    }
+                                  />
+                                </div>
+                                <div className={`ml-4 text-xs ${block.blocked ? 'text-destructive' : 'text-primary'}`}>
+                                  {block.blocked ? '🔒 Ocupado - Não aceita outros agendamentos' : '✅ Disponível - Pode atender outros clientes'}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          
+                          <div className="flex gap-2 text-xs">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-destructive" />
+                              <span className="text-muted-foreground">Bloqueado</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-primary" />
+                              <span className="text-muted-foreground">Disponível</span>
+                            </div>
+                          </div>
+                          
                           <Button 
                             variant="outline" 
                             size="sm"
