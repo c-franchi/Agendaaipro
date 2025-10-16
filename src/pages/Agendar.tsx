@@ -166,6 +166,32 @@ export default function Agendar() {
       const token = generateBookingToken(crypto.randomUUID());
       const dateStr = selectedDate.toISOString().split('T')[0];
 
+      // Criar/buscar conversa do cliente
+      const { data: existingConversation } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("customer_whatsapp", customerWhatsapp)
+        .maybeSingle();
+
+      let conversationId = existingConversation?.id;
+
+      if (!conversationId) {
+        // Criar nova conversa
+        const { data: newConversation, error: convError } = await supabase
+          .from("conversations")
+          .insert({
+            customer_name: customerName,
+            customer_whatsapp: customerWhatsapp,
+          })
+          .select()
+          .single();
+
+        if (!convError && newConversation) {
+          conversationId = newConversation.id;
+        }
+      }
+
+      // Inserir agendamento
       const { data, error } = await supabase
         .from("bookings")
         .insert({
@@ -182,6 +208,16 @@ export default function Agendar() {
         .single();
 
       if (error) throw error;
+
+      // Enviar mensagem automática no chat
+      if (conversationId) {
+        await supabase.from("messages").insert({
+          conversation_id: conversationId,
+          sender_type: "admin",
+          content: `🎉 Olá ${customerName}! Seu agendamento foi criado com sucesso!\n\n📋 Serviço: ${selectedService.name}\n📅 Data: ${selectedDate.toLocaleDateString('pt-BR')}\n⏰ Horário: ${selectedTime}\n💰 Valor: R$ ${parseFloat(selectedService.price).toFixed(2)}\n\nPara confirmar, realize o pagamento. Aguardamos você!`,
+          status: "sent",
+        });
+      }
 
       // Agendar notificação de lembrete
       scheduleNotification(dateStr, selectedTime, customerName);

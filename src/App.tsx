@@ -9,6 +9,7 @@ import Pagar from "./pages/Pagar";
 import Admin from "./pages/Admin";
 import Dashboard from "./pages/admin/Dashboard";
 import Agenda from "./pages/admin/Agenda";
+import Chat from "./pages/admin/Chat";
 import Servicos from "./pages/admin/Servicos";
 import Financeiro from "./pages/admin/Financeiro";
 import Configuracoes from "./pages/admin/Configuracoes";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/agenda" element={<Agenda />} />
+          <Route path="/admin/chat" element={<Chat />} />
           <Route path="/admin/servicos" element={<Servicos />} />
           <Route path="/admin/financeiro" element={<Financeiro />} />
           <Route path="/admin/configuracoes" element={<Configuracoes />} />
