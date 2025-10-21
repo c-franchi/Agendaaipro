@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Calendar, Scissors, DollarSign, Settings, LogOut, Menu, MessageCircle } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, DollarSign, Settings, LogOut, Menu, MessageCircle, User, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -83,7 +83,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         })}
       </nav>
 
-      <div className="mt-auto pt-4 border-t border-sidebar-border">
+      <div className="mt-auto pt-4 border-t border-sidebar-border space-y-2">
+        <Link to="/admin/perfil">
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+          >
+            <User className="w-4 h-4 mr-2" />
+            Meu Perfil
+          </Button>
+        </Link>
+        <Link to="/admin/usuarios">
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Administradores
+          </Button>
+        </Link>
         <Button
           variant="outline"
           className="w-full justify-start"
