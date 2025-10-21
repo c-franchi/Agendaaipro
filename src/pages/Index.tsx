@@ -144,19 +144,55 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card py-8 border-t border-border">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex justify-center gap-4 mb-4">
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-              <Instagram className="w-6 h-6" />
-            </a>
-            <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-              <Phone className="w-6 h-6" />
-            </a>
+      <footer className="bg-card py-12 border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            <div className="text-center md:text-left">
+              <h3 className="text-xl font-bold mb-4 text-foreground">
+                {barber?.name || "BarberPro"}
+              </h3>
+              <p className="text-muted-foreground">
+                Profissionalismo e estilo em cada corte
+              </p>
+            </div>
+
+            <div className="text-center">
+              <h4 className="font-semibold mb-4 text-foreground">Redes Sociais</h4>
+              <div className="flex justify-center gap-4">
+                <a 
+                  href="https://instagram.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Instagram className="w-6 h-6" />
+                </a>
+                <a 
+                  href="https://wa.me/5511999999999" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <Phone className="w-6 h-6" />
+                </a>
+              </div>
+            </div>
+
+            <div className="text-center md:text-right">
+              <h4 className="font-semibold mb-4 text-foreground">Acesso</h4>
+              <Link to="/cliente">
+                <Button variant="outline" size="sm">
+                  Área do Cliente
+                </Button>
+              </Link>
+            </div>
           </div>
-          <p className="text-muted-foreground">
-            © 2024 {barber?.name || "BarberPro"}. Todos os direitos reservados.
-          </p>
+
+          <div className="border-t border-border pt-6 text-center">
+            <p className="text-muted-foreground">
+              © 2025 {barber?.name || "BarberPro"}. Todos os direitos reservados.
+            </p>
+          </div>
         </div>
       </footer>
     </div>;

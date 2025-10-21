@@ -167,6 +167,8 @@ export default function Agendar() {
       const dateStr = selectedDate.toISOString().split('T')[0];
 
       // Criar/buscar conversa do cliente
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data: existingConversation } = await supabase
         .from("conversations")
         .select("id")
@@ -182,6 +184,7 @@ export default function Agendar() {
           .insert({
             customer_name: customerName,
             customer_whatsapp: customerWhatsapp,
+            user_id: session?.user?.id || null,
           })
           .select()
           .single();

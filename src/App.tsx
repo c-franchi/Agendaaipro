@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 import Agendar from "./pages/Agendar";
 import Pagar from "./pages/Pagar";
 import Admin from "./pages/Admin";
+import Cliente from "./pages/Cliente";
+import ClienteChat from "./pages/cliente/Chat";
 import Dashboard from "./pages/admin/Dashboard";
 import Agenda from "./pages/admin/Agenda";
 import Chat from "./pages/admin/Chat";
@@ -34,6 +36,8 @@ const App = () => (
           <Route path="/admin/servicos" element={<Servicos />} />
           <Route path="/admin/financeiro" element={<Financeiro />} />
           <Route path="/admin/configuracoes" element={<Configuracoes />} />
+          <Route path="/cliente" element={<Cliente />} />
+          <Route path="/cliente/chat" element={<ClienteChat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
