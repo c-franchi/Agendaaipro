@@ -36,7 +36,7 @@ export default function Cliente() {
       if (error) throw error;
 
       toast.success("Login realizado com sucesso!");
-      navigate("/cliente/chat");
+      navigate("/cliente/agendamentos");
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Erro ao fazer login");
@@ -58,7 +58,7 @@ export default function Cliente() {
             full_name: signupFullName,
             phone: signupPhone,
           },
-          emailRedirectTo: `${window.location.origin}/cliente/chat`,
+          emailRedirectTo: `${window.location.origin}/cliente/agendamentos`,
         },
       });
 

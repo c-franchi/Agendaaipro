@@ -8,6 +8,8 @@ import Agendar from "./pages/Agendar";
 import Pagar from "./pages/Pagar";
 import Admin from "./pages/Admin";
 import Cliente from "./pages/Cliente";
+import ClienteAgendamentos from "./pages/cliente/Agendamentos";
+import ClientePerfil from "./pages/cliente/Perfil";
 import ClienteChat from "./pages/cliente/Chat";
 import Dashboard from "./pages/admin/Dashboard";
 import Agenda from "./pages/admin/Agenda";
@@ -41,6 +43,8 @@ const App = () => (
           <Route path="/admin/perfil" element={<Perfil />} />
           <Route path="/admin/usuarios" element={<Usuarios />} />
           <Route path="/cliente" element={<Cliente />} />
+          <Route path="/cliente/agendamentos" element={<ClienteAgendamentos />} />
+          <Route path="/cliente/perfil" element={<ClientePerfil />} />
           <Route path="/cliente/chat" element={<ClienteChat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

@@ -92,11 +92,18 @@ const Index = () => {
             </Card>
           </div>
           
-          <Link to="/agendar">
-            <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
-              Agendar Horário
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link to="/agendar">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 text-lg px-8 py-6">
+                Agendar Horário
+              </Button>
+            </Link>
+            <Link to="/cliente">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6 bg-background/80 backdrop-blur-sm">
+                Área do Cliente
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -180,11 +187,18 @@ const Index = () => {
 
             <div className="text-center md:text-right">
               <h4 className="font-semibold mb-4 text-foreground">Acesso</h4>
-              <Link to="/cliente">
-                <Button variant="outline" size="sm">
-                  Área do Cliente
-                </Button>
-              </Link>
+              <div className="flex flex-col gap-2">
+                <Link to="/cliente">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Área do Cliente
+                  </Button>
+                </Link>
+                <Link to="/admin">
+                  <Button variant="ghost" size="sm" className="w-full text-muted-foreground hover:text-foreground">
+                    Área Administrativa
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 
