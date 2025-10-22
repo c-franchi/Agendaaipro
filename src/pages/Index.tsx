@@ -48,16 +48,16 @@ const Index = () => {
     </div>;
   }
   
-  return <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative h-screen">
+      <section className="relative h-screen max-w-full">
         <div className="absolute inset-0 bg-cover bg-center" style={{
         backgroundImage: `url(${heroImage})`
       }}>
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
         </div>
         
-        <div className="relative z-10 container mx-auto px-4 h-full flex flex-col justify-center items-center text-center">
+        <div className="relative z-10 container mx-auto px-4 h-full flex flex-col justify-center items-center text-center max-w-full">
           <div className="flex items-center gap-2 mb-4">
             <Star className="w-6 h-6 text-primary fill-primary" />
             <Star className="w-6 h-6 text-primary fill-primary" />
@@ -108,8 +108,8 @@ const Index = () => {
       </section>
 
       {/* Galeria */}
-      <section className="py-20 bg-card">
-        <div className="container mx-auto px-4">
+      <section className="py-20 bg-card overflow-x-hidden">
+        <div className="container mx-auto px-4 max-w-full">
           <h2 className="text-4xl font-bold text-center mb-12 text-foreground">
             Nossos Trabalhos
           </h2>
@@ -123,8 +123,8 @@ const Index = () => {
       </section>
 
       {/* Serviços */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
+      <section className="py-20 bg-background overflow-x-hidden">
+        <div className="container mx-auto px-4 max-w-full">
           <h2 className="text-4xl font-bold text-center mb-12 text-foreground">
             Nossos Serviços
           </h2>
@@ -151,8 +151,8 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-card py-12 border-t border-border">
-        <div className="container mx-auto px-4">
+      <footer className="bg-card py-12 border-t border-border overflow-x-hidden">
+        <div className="container mx-auto px-4 max-w-full">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div className="text-center md:text-left">
               <h3 className="text-xl font-bold mb-4 text-foreground">

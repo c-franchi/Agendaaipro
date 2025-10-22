@@ -100,7 +100,14 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html,
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
+    max-width: 100vw;
+  }
+  
+  #root {
+    @apply overflow-x-hidden;
+    max-width: 100vw;
   }
 }

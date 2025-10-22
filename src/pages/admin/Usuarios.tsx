@@ -51,6 +51,11 @@ export default function Usuarios() {
 
       if (rolesError) throw rolesError;
 
+      if (!adminRoles || adminRoles.length === 0) {
+        setAdmins([]);
+        return;
+      }
+
       const adminIds = adminRoles.map(r => r.user_id);
 
       // Buscar perfis dos admins
@@ -61,19 +66,12 @@ export default function Usuarios() {
 
       if (profilesError) throw profilesError;
 
-      // Para cada perfil, buscar o email do auth
-      const adminsData: Admin[] = [];
-      
-      for (const profile of profiles || []) {
-        // Nota: Em produção, você precisaria de uma edge function para buscar emails
-        // Por enquanto, vamos mostrar apenas os dados que temos
-        adminsData.push({
-          id: profile.id,
-          email: "admin@example.com", // Placeholder - email não é acessível via client
-          full_name: profile.full_name,
-          created_at: profile.created_at
-        });
-      }
+      const adminsData: Admin[] = (profiles || []).map((profile) => ({
+        id: profile.id,
+        email: profile.phone || "Não informado",
+        full_name: profile.full_name || "Admin",
+        created_at: profile.created_at
+      }));
 
       setAdmins(adminsData);
     } catch (error: any) {
@@ -116,31 +114,29 @@ export default function Usuarios() {
     setAddingAdmin(true);
 
     try {
-      // Criar novo usuário
-      const { data, error } = await supabase.auth.signUp({
-        email: newAdminEmail,
-        password: newAdminPassword,
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      // Usar edge function para criar admin de forma segura
+      const { data, error } = await supabase.functions.invoke('create-admin', {
+        body: {
+          email: newAdminEmail,
+          password: newAdminPassword,
+          full_name: newAdminEmail.split('@')[0]
+        }
       });
 
       if (error) throw error;
 
-      if (data.user) {
-        // Adicionar role de admin
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: data.user.id,
-            role: "admin",
-          });
-
-        if (roleError) throw roleError;
-
-        toast.success("Novo administrador adicionado com sucesso!");
-        setNewAdminEmail("");
-        setNewAdminPassword("");
-        setDialogOpen(false);
-        loadAdmins();
-      }
+      toast.success("Novo administrador adicionado com sucesso!");
+      setNewAdminEmail("");
+      setNewAdminPassword("");
+      setDialogOpen(false);
+      loadAdmins();
     } catch (error: any) {
       console.error("Erro ao adicionar admin:", error);
       toast.error(error.message || "Erro ao adicionar administrador");
@@ -151,10 +147,10 @@ export default function Usuarios() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-6 max-w-full overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
               <Users className="w-8 h-8" />
               Administradores
             </h1>
@@ -163,7 +159,7 @@ export default function Usuarios() {
 
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <UserPlus className="w-4 h-4 mr-2" />
                 Adicionar Admin
               </Button>
@@ -226,15 +222,16 @@ export default function Usuarios() {
             ) : admins.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">Nenhum administrador encontrado</p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[150px]">Nome</TableHead>
+                      <TableHead className="min-w-[100px]">Role</TableHead>
+                      <TableHead className="min-w-[120px]">Data de Criação</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {admins.map((admin) => (
                     <TableRow key={admin.id}>
@@ -267,6 +264,7 @@ export default function Usuarios() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

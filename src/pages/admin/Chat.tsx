@@ -167,9 +167,9 @@ export default function Chat() {
 
   return (
     <AdminLayout>
-      <div className="h-[calc(100vh-8rem)] flex gap-4">
+      <div className="h-[calc(100vh-8rem)] flex flex-col lg:flex-row gap-4 overflow-x-hidden">
         {/* Lista de Conversas */}
-        <Card className="w-80 flex flex-col">
+        <Card className={`w-full lg:w-80 flex flex-col ${selectedConversation ? 'hidden lg:flex' : 'flex'}`}>
           <CardContent className="p-4 flex flex-col h-full">
             <div className="mb-4">
               <div className="relative">
@@ -237,12 +237,20 @@ export default function Chat() {
         </Card>
 
         {/* Área de Mensagens */}
-        <Card className="flex-1 flex flex-col">
+        <Card className={`flex-1 flex flex-col ${!selectedConversation ? 'hidden lg:flex' : 'flex'}`}>
           {selectedConversation ? (
             <>
               {/* Cabeçalho do Chat */}
               <div className="p-4 border-b">
                 <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden"
+                    onClick={() => setSelectedConversation(null)}
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </Button>
                   <Avatar>
                     <AvatarFallback>
                       {selectedConversation.customer_name.charAt(0).toUpperCase()}
@@ -268,7 +276,7 @@ export default function Chat() {
                       }`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-lg p-3 ${
+                        className={`max-w-[70%] sm:max-w-[60%] rounded-lg p-3 break-words ${
                           msg.sender_type === "admin"
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
@@ -299,6 +307,7 @@ export default function Chat() {
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                    className="flex-1"
                   />
                   <Button onClick={handleSendMessage} size="icon">
                     <Send className="w-4 h-4" />

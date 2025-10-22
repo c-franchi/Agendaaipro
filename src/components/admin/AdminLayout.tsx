@@ -115,7 +115,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Mobile Header */}
       <header className="lg:hidden flex items-center justify-between p-4 border-b border-sidebar-border bg-sidebar">
         <div>
@@ -141,7 +141,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8 overflow-auto">
+        <main className="flex-1 p-4 lg:p-8 overflow-x-hidden overflow-y-auto max-w-full">
           {children}
         </main>
       </div>
