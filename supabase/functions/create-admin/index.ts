@@ -23,16 +23,29 @@ Deno.serve(async (req) => {
     )
 
     // Verificar se o usuário atual é admin
-    const authHeader = req.headers.get('Authorization')!
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      console.error('No authorization header')
+      return new Response(JSON.stringify({ error: 'Authorization header missing' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
+    
+    console.log('User validation:', { userId: user?.id, error: userError?.message })
 
     if (userError || !user) {
+      console.error('User validation failed:', userError?.message)
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    console.log('Checking admin role for user:', user.id)
 
     // Verificar se é admin
     const { data: roleData } = await supabaseClient
@@ -43,13 +56,16 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     if (!roleData) {
+      console.error('User is not admin:', user.id)
       return new Response(JSON.stringify({ error: 'Acesso negado' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    console.log('Admin verified, processing request')
     const { email, password, full_name } = await req.json()
+    console.log('Creating admin user:', { email, full_name })
 
     // Criar novo usuário admin usando service role
     const { data: newUser, error: signUpError } = await supabaseClient.auth.admin.createUser({
@@ -62,11 +78,14 @@ Deno.serve(async (req) => {
     })
 
     if (signUpError) {
+      console.error('Error creating user:', signUpError.message)
       return new Response(JSON.stringify({ error: signUpError.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+    
+    console.log('User created successfully:', newUser.user.id)
 
     // Remover a role customer que foi criada automaticamente
     await supabaseClient
@@ -84,12 +103,14 @@ Deno.serve(async (req) => {
       })
 
     if (roleError) {
+      console.error('Error adding admin role:', roleError.message)
       return new Response(JSON.stringify({ error: roleError.message }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    console.log('Admin role added successfully')
     return new Response(JSON.stringify({ 
       success: true,
       user: { id: newUser.user.id, email: newUser.user.email }
