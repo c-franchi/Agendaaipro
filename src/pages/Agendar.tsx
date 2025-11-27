@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { generateBookingToken } from "@/utils/token";
 import { scheduleNotification, notifyNewBooking } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Agendar() {
   const navigate = useNavigate();
@@ -20,13 +18,27 @@ export default function Agendar() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerWhatsapp, setCustomerWhatsapp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<{ full_name: string; phone: string } | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     loadServices();
+    loadUserProfile();
   }, []);
+
+  async function loadUserProfile() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", session.user.id)
+        .single();
+      
+      setUserProfile(profile);
+    }
+  }
 
   useEffect(() => {
     if (selectedDate && selectedService) {
@@ -162,16 +174,26 @@ export default function Agendar() {
     setAvailableSlots(slots);
   }
 
-  async function handleSubmit() {
-    if (!selectedService || !selectedDate || !selectedTime || !customerName || !customerWhatsapp) {
-      toast.error("Preencha todos os campos");
+  async function handleConfirmBooking() {
+    if (!selectedService || !selectedDate || !selectedTime) {
+      toast.error("Selecione o serviço, data e horário");
       return;
     }
 
+    if (!userProfile?.full_name || !userProfile?.phone) {
+      toast.error("Complete seu perfil antes de agendar");
+      navigate("/cliente/perfil");
+      return;
+    }
+
+    setShowConfirmDialog(true);
+  }
+
+  async function handleSubmit() {
+    setShowConfirmDialog(false);
     setLoading(true);
 
     try {
-      // Buscar configurações de pagamento
       const { data: settingsData } = await supabase
         .from("settings")
         .select("require_payment_on_booking")
@@ -180,26 +202,24 @@ export default function Agendar() {
       const requirePayment = settingsData?.require_payment_on_booking ?? true;
 
       const token = generateBookingToken(crypto.randomUUID());
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const dateStr = selectedDate!.toISOString().split('T')[0];
 
-      // Criar/buscar conversa do cliente
       const { data: { session } } = await supabase.auth.getSession();
       
       const { data: existingConversation } = await supabase
         .from("conversations")
         .select("id")
-        .eq("customer_whatsapp", customerWhatsapp)
+        .eq("customer_whatsapp", userProfile!.phone)
         .maybeSingle();
 
       let conversationId = existingConversation?.id;
 
       if (!conversationId) {
-        // Criar nova conversa
         const { data: newConversation, error: convError } = await supabase
           .from("conversations")
           .insert({
-            customer_name: customerName,
-            customer_whatsapp: customerWhatsapp,
+            customer_name: userProfile!.full_name,
+            customer_whatsapp: userProfile!.phone,
             user_id: session?.user?.id || null,
           })
           .select()
@@ -213,16 +233,15 @@ export default function Agendar() {
       // Definir status baseado na configuração de pagamento
       const bookingStatus = requirePayment ? "PENDING_PAYMENT" : "CONFIRMED";
 
-      // Inserir agendamento
       const { data, error } = await supabase
         .from("bookings")
         .insert({
-          service_id: selectedService.id,
-          customer_name: customerName,
-          customer_whatsapp: customerWhatsapp,
+          service_id: selectedService!.id,
+          customer_name: userProfile!.full_name,
+          customer_whatsapp: userProfile!.phone,
           booking_date: dateStr,
           booking_time: selectedTime,
-          price: selectedService.price,
+          price: selectedService!.price,
           token,
           status: bookingStatus
         })
@@ -236,21 +255,17 @@ export default function Agendar() {
         ? "\n\nPara confirmar, realize o pagamento via Pix. Aguardamos você!"
         : "\n\nPagamento será realizado presencialmente. Aguardamos você!";
 
-      // Enviar mensagem automática no chat
       if (conversationId) {
         await supabase.from("messages").insert({
           conversation_id: conversationId,
           sender_type: "admin",
-          content: `🎉 Olá ${customerName}! Seu agendamento foi criado com sucesso!\n\n📋 Serviço: ${selectedService.name}\n📅 Data: ${selectedDate.toLocaleDateString('pt-BR')}\n⏰ Horário: ${selectedTime}\n💰 Valor: R$ ${parseFloat(selectedService.price).toFixed(2)}${paymentMessage}`,
+          content: `🎉 Olá ${userProfile!.full_name}! Seu agendamento foi criado com sucesso!\n\n📋 Serviço: ${selectedService!.name}\n📅 Data: ${selectedDate!.toLocaleDateString('pt-BR')}\n⏰ Horário: ${selectedTime}\n💰 Valor: R$ ${parseFloat(selectedService!.price).toFixed(2)}${paymentMessage}`,
           status: "sent",
         });
       }
 
-      // Agendar notificação de lembrete para o cliente
-      scheduleNotification(dateStr, selectedTime, customerName);
-
-      // Enviar notificação para o admin
-      notifyNewBooking(customerName, selectedService.name, dateStr, selectedTime);
+      scheduleNotification(dateStr, selectedTime, userProfile!.full_name);
+      notifyNewBooking(userProfile!.full_name, selectedService!.name, dateStr, selectedTime);
 
       if (requirePayment) {
         toast.success("Agendamento criado! Redirecionando para pagamento...");
@@ -272,16 +287,18 @@ export default function Agendar() {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-2xl">
-        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+        >
           <ArrowLeft className="w-4 h-4" />
           Voltar
-        </Link>
+        </button>
 
         <h1 className="text-4xl font-bold mb-8 text-foreground text-center">Agendar Horário</h1>
 
-        {/* Indicador de etapas */}
         <div className="flex justify-center gap-2 mb-8">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3].map((s) => (
             <div
               key={s}
               className={`w-3 h-3 rounded-full ${
@@ -352,46 +369,16 @@ export default function Agendar() {
                     <Button
                       key={time}
                       variant={selectedTime === time ? "default" : "outline"}
-                      onClick={() => {
-                        setSelectedTime(time);
-                        setStep(4);
-                      }}
+                      onClick={() => setSelectedTime(time)}
                     >
                       {time}
                     </Button>
                   ))}
                 </div>
               )}
-              <Button variant="outline" className="mt-4" onClick={() => setStep(2)}>
-                Voltar
-              </Button>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div>
-              <h2 className="text-2xl font-bold mb-4 text-foreground">Seus Dados</h2>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input
-                    id="name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Seu nome"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="whatsapp">WhatsApp (com DDD)</Label>
-                  <Input
-                    id="whatsapp"
-                    value={customerWhatsapp}
-                    onChange={(e) => setCustomerWhatsapp(e.target.value)}
-                    placeholder="11999999999"
-                  />
-                </div>
-
-                <div className="bg-muted p-4 rounded-lg">
+              
+              {selectedTime && (
+                <div className="mt-6 bg-muted p-4 rounded-lg">
                   <h3 className="font-bold mb-2 text-foreground">Resumo do Agendamento</h3>
                   <p className="text-sm text-muted-foreground">
                     <strong>Serviço:</strong> {selectedService?.name}
@@ -406,19 +393,45 @@ export default function Agendar() {
                     <strong>Valor:</strong> R$ {parseFloat(selectedService?.price || 0).toFixed(2)}
                   </p>
                 </div>
+              )}
 
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => setStep(3)}>
-                    Voltar
+              <div className="flex gap-2 mt-4">
+                <Button variant="outline" onClick={() => setStep(2)}>
+                  Voltar
+                </Button>
+                {selectedTime && (
+                  <Button onClick={handleConfirmBooking} className="flex-1">
+                    Confirmar Agendamento
                   </Button>
-                  <Button onClick={handleSubmit} disabled={loading} className="flex-1">
-                    {loading ? "Processando..." : "Confirmar Agendamento"}
-                  </Button>
-                </div>
+                )}
               </div>
             </div>
           )}
         </Card>
+
+        <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Agendamento</AlertDialogTitle>
+              <AlertDialogDescription>
+                <div className="space-y-2 mt-4">
+                  <p><strong>Serviço:</strong> {selectedService?.name}</p>
+                  <p><strong>Data:</strong> {selectedDate?.toLocaleDateString('pt-BR')}</p>
+                  <p><strong>Horário:</strong> {selectedTime}</p>
+                  <p><strong>Valor:</strong> R$ {parseFloat(selectedService?.price || 0).toFixed(2)}</p>
+                  <p className="mt-4"><strong>Cliente:</strong> {userProfile?.full_name}</p>
+                  <p><strong>WhatsApp:</strong> {userProfile?.phone}</p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleSubmit} disabled={loading}>
+                {loading ? "Processando..." : "Confirmar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
