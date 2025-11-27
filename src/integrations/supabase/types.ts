@@ -371,6 +371,7 @@ export type Database = {
           pix_chave: string | null
           pix_cidade: string | null
           pix_nome_recebedor: string | null
+          require_payment_on_booking: boolean | null
           updated_at: string | null
           whatsapp_access_token: string | null
           whatsapp_business_number: string | null
@@ -385,6 +386,7 @@ export type Database = {
           pix_chave?: string | null
           pix_cidade?: string | null
           pix_nome_recebedor?: string | null
+          require_payment_on_booking?: boolean | null
           updated_at?: string | null
           whatsapp_access_token?: string | null
           whatsapp_business_number?: string | null
@@ -399,6 +401,7 @@ export type Database = {
           pix_chave?: string | null
           pix_cidade?: string | null
           pix_nome_recebedor?: string | null
+          require_payment_on_booking?: boolean | null
           updated_at?: string | null
           whatsapp_access_token?: string | null
           whatsapp_business_number?: string | null
