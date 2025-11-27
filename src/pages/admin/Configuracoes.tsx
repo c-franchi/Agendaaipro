@@ -20,6 +20,7 @@ interface Settings {
   min_advance_hours?: number;
   max_days_ahead?: number;
   cancel_policy_hours?: number;
+  require_payment_on_booking?: boolean;
 }
 
 interface BarberProfile {
@@ -167,9 +168,10 @@ export default function Configuracoes() {
         </div>
 
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="schedule">Horários</TabsTrigger>
+            <TabsTrigger value="payment">Pagamento</TabsTrigger>
             <TabsTrigger value="pix">Pix</TabsTrigger>
             <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
           </TabsList>
@@ -307,6 +309,35 @@ export default function Configuracoes() {
                 <Button onClick={handleSaveSchedules} className="w-full">
                   Salvar Horários
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payment">
+            <Card>
+              <CardHeader>
+                <CardTitle>Opções de Pagamento</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Configure como deseja receber os pagamentos
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <Label className="text-base font-medium">Pagamento no Agendamento</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Quando ativado, o cliente deve realizar o pagamento via Pix no momento do agendamento. 
+                      Quando desativado, o pagamento será feito presencialmente.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.require_payment_on_booking ?? true}
+                    onCheckedChange={(checked) =>
+                      setSettings({ ...settings, require_payment_on_booking: checked })
+                    }
+                  />
+                </div>
+                <Button onClick={handleSaveSettings}>Salvar Configurações</Button>
               </CardContent>
             </Card>
           </TabsContent>

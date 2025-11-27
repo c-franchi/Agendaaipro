@@ -53,3 +53,10 @@ export function scheduleNotification(bookingDate: string, bookingTime: string, c
     }, delay);
   }
 }
+
+export function notifyNewBooking(customerName: string, serviceName: string, bookingDate: string, bookingTime: string) {
+  showNotification(
+    '🎉 Novo Agendamento!',
+    `${customerName} agendou ${serviceName} para ${new Date(bookingDate).toLocaleDateString('pt-BR')} às ${bookingTime}`
+  );
+}

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { generateBookingToken } from "@/utils/token";
-import { scheduleNotification } from "@/utils/pwa";
+import { scheduleNotification, notifyNewBooking } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -49,14 +49,22 @@ export default function Agendar() {
     const dateStr = selectedDate.toISOString().split('T')[0];
 
     // Buscar regras de disponibilidade
-    const { data: rules } = await supabase
+    const { data: rules, error: rulesError } = await supabase
       .from("availability_rules")
       .select("*")
       .eq("weekday", weekday)
       .eq("is_active", true)
-      .single();
+      .maybeSingle();
+
+    if (rulesError) {
+      console.error("Erro ao buscar regras:", rulesError);
+      toast.error("Erro ao carregar horários disponíveis");
+      setAvailableSlots([]);
+      return;
+    }
 
     if (!rules) {
+      console.log("Nenhuma regra encontrada para o dia:", weekday);
       setAvailableSlots([]);
       return;
     }
@@ -163,6 +171,14 @@ export default function Agendar() {
     setLoading(true);
 
     try {
+      // Buscar configurações de pagamento
+      const { data: settingsData } = await supabase
+        .from("settings")
+        .select("require_payment_on_booking")
+        .single();
+
+      const requirePayment = settingsData?.require_payment_on_booking ?? true;
+
       const token = generateBookingToken(crypto.randomUUID());
       const dateStr = selectedDate.toISOString().split('T')[0];
 
@@ -194,6 +210,9 @@ export default function Agendar() {
         }
       }
 
+      // Definir status baseado na configuração de pagamento
+      const bookingStatus = requirePayment ? "PENDING_PAYMENT" : "CONFIRMED";
+
       // Inserir agendamento
       const { data, error } = await supabase
         .from("bookings")
@@ -205,30 +224,43 @@ export default function Agendar() {
           booking_time: selectedTime,
           price: selectedService.price,
           token,
-          status: "PENDING_PAYMENT"
+          status: bookingStatus
         })
         .select()
         .single();
 
       if (error) throw error;
 
+      // Mensagem apropriada baseada no tipo de pagamento
+      const paymentMessage = requirePayment 
+        ? "\n\nPara confirmar, realize o pagamento via Pix. Aguardamos você!"
+        : "\n\nPagamento será realizado presencialmente. Aguardamos você!";
+
       // Enviar mensagem automática no chat
       if (conversationId) {
         await supabase.from("messages").insert({
           conversation_id: conversationId,
           sender_type: "admin",
-          content: `🎉 Olá ${customerName}! Seu agendamento foi criado com sucesso!\n\n📋 Serviço: ${selectedService.name}\n📅 Data: ${selectedDate.toLocaleDateString('pt-BR')}\n⏰ Horário: ${selectedTime}\n💰 Valor: R$ ${parseFloat(selectedService.price).toFixed(2)}\n\nPara confirmar, realize o pagamento. Aguardamos você!`,
+          content: `🎉 Olá ${customerName}! Seu agendamento foi criado com sucesso!\n\n📋 Serviço: ${selectedService.name}\n📅 Data: ${selectedDate.toLocaleDateString('pt-BR')}\n⏰ Horário: ${selectedTime}\n💰 Valor: R$ ${parseFloat(selectedService.price).toFixed(2)}${paymentMessage}`,
           status: "sent",
         });
       }
 
-      // Agendar notificação de lembrete
+      // Agendar notificação de lembrete para o cliente
       scheduleNotification(dateStr, selectedTime, customerName);
 
-      toast.success("Agendamento criado! Você receberá uma mensagem no WhatsApp.");
-      
-      // Redirecionar para pagamento
-      navigate(`/pagar?booking=${data.id}&token=${token}`);
+      // Enviar notificação para o admin
+      notifyNewBooking(customerName, selectedService.name, dateStr, selectedTime);
+
+      if (requirePayment) {
+        toast.success("Agendamento criado! Redirecionando para pagamento...");
+        // Redirecionar para pagamento
+        navigate(`/pagar?booking=${data.id}&token=${token}`);
+      } else {
+        toast.success("Agendamento confirmado! Pagamento será realizado presencialmente.");
+        // Redirecionar para página de agendamentos do cliente
+        setTimeout(() => navigate("/cliente/agendamentos"), 2000);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Erro ao criar agendamento");
