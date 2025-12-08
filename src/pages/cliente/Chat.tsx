@@ -134,22 +134,58 @@ export default function ClienteChat() {
     );
   }
 
+  async function startConversation() {
+    if (!userId) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", userId)
+        .single();
+
+      if (!profile) {
+        toast.error("Complete seu perfil antes de iniciar uma conversa");
+        navigate("/cliente/perfil");
+        return;
+      }
+
+      const { data: newConv, error } = await supabase
+        .from("conversations")
+        .insert({
+          user_id: userId,
+          customer_name: profile.full_name || "Cliente",
+          customer_whatsapp: profile.phone || "",
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setConversation(newConv);
+      toast.success("Conversa iniciada!");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Erro ao iniciar conversa");
+    }
+  }
+
   if (!conversation) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-8 max-w-md w-full text-center">
           <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Nenhuma conversa ativa</h2>
+          <h2 className="text-2xl font-bold mb-2">Chat com o Profissional</h2>
           <p className="text-muted-foreground mb-6">
-            Faça um agendamento para iniciar uma conversa com o barbeiro!
+            Inicie uma conversa para tirar dúvidas, solicitar reagendamentos ou obter informações.
           </p>
-          <div className="flex gap-4 justify-center">
-            <Button onClick={() => navigate("/agendar")}>
-              Fazer Agendamento
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button onClick={startConversation}>
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Iniciar Conversa
             </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
+            <Button variant="outline" onClick={() => navigate("/cliente/agendamentos")}>
+              Voltar
             </Button>
           </div>
         </Card>
