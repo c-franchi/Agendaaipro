@@ -154,7 +154,7 @@ const Index = () => {
               <h3 className="text-xl font-bold mb-4 text-foreground text-center">
                 {barber?.name || "BarberPro"}
               </h3>
-              <p className="text-muted-foreground">Profissionalismo e estilo em cada corte!</p>
+              <p className="text-muted-foreground text-center">Profissionalismo e estilo em cada corte!</p>
             </div>
 
             <div className="text-center">
@@ -187,7 +187,7 @@ const Index = () => {
           </div>
 
           <div className="border-t border-border pt-6 text-left">
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-center">
               © 2025 {barber?.name || "BarberPro"}. Todos os direitos reservados.
             </p>
           </div>
