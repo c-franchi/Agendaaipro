@@ -151,14 +151,14 @@ const Index = () => {
         <div className="container mx-auto px-4 max-w-full">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div className="text-center md:text-left">
-              <h3 className="text-xl font-bold mb-4 text-foreground">
+              <h3 className="text-xl font-bold mb-4 text-foreground text-center">
                 {barber?.name || "BarberPro"}
               </h3>
               <p className="text-muted-foreground">Profissionalismo e estilo em cada corte!</p>
             </div>
 
             <div className="text-center">
-              <h4 className="font-semibold mb-4 text-foreground">Redes Sociais</h4>
+              <h4 className="font-semibold mb-4 text-foreground text-center">Redes Sociais</h4>
               <div className="flex justify-center gap-4">
                 <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                   <Instagram className="w-6 h-6" />
@@ -170,7 +170,7 @@ const Index = () => {
             </div>
 
             <div className="text-center md:text-right">
-              <h4 className="font-semibold mb-4 text-foreground">Acessos</h4>
+              <h4 className="font-semibold mb-4 text-foreground text-center">Acessos</h4>
               <div className="flex flex-col gap-2">
                 <Link to="/cliente">
                   <Button variant="outline" size="sm" className="w-full">
@@ -186,7 +186,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="border-t border-border pt-6 text-center">
+          <div className="border-t border-border pt-6 text-left">
             <p className="text-muted-foreground">
               © 2025 {barber?.name || "BarberPro"}. Todos os direitos reservados.
             </p>
