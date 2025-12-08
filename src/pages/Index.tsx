@@ -15,11 +15,9 @@ const Index = () => {
   const [barber, setBarber] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
   useEffect(() => {
     loadData();
   }, []);
-  
   async function loadData() {
     const {
       data: barberData
@@ -30,7 +28,7 @@ const Index = () => {
     setBarber(barberData);
     setServices(servicesData || []);
     setLoading(false);
-    
+
     // Atualizar título da página
     if (barberData?.name) {
       document.title = barberData.name;
@@ -39,7 +37,6 @@ const Index = () => {
     }
   }
   const galleryImages = [haircut1, haircut2, haircut3, haircut4, beard1, shave1];
-  
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
@@ -47,7 +44,6 @@ const Index = () => {
       </div>
     </div>;
   }
-  
   return <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Hero Section */}
       <section className="relative h-screen max-w-full">
@@ -158,35 +154,23 @@ const Index = () => {
               <h3 className="text-xl font-bold mb-4 text-foreground">
                 {barber?.name || "BarberPro"}
               </h3>
-              <p className="text-muted-foreground">
-                Profissionalismo e estilo em cada corte
-              </p>
+              <p className="text-muted-foreground">Profissionalismo e estilo em cada corte!</p>
             </div>
 
             <div className="text-center">
               <h4 className="font-semibold mb-4 text-foreground">Redes Sociais</h4>
               <div className="flex justify-center gap-4">
-                <a 
-                  href="https://instagram.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                   <Instagram className="w-6 h-6" />
                 </a>
-                <a 
-                  href="https://wa.me/5511999999999" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
+                <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                   <Phone className="w-6 h-6" />
                 </a>
               </div>
             </div>
 
             <div className="text-center md:text-right">
-              <h4 className="font-semibold mb-4 text-foreground">Acesso</h4>
+              <h4 className="font-semibold mb-4 text-foreground">Acessos</h4>
               <div className="flex flex-col gap-2">
                 <Link to="/cliente">
                   <Button variant="outline" size="sm" className="w-full">
