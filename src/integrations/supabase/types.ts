@@ -147,7 +147,9 @@ export type Database = {
           customer_name: string
           customer_whatsapp: string
           id: string
+          payment_method: string | null
           price: number
+          receipt_url: string | null
           service_id: string | null
           status: Database["public"]["Enums"]["booking_status"] | null
           token: string | null
@@ -160,7 +162,9 @@ export type Database = {
           customer_name: string
           customer_whatsapp: string
           id?: string
+          payment_method?: string | null
           price: number
+          receipt_url?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           token?: string | null
@@ -173,7 +177,9 @@ export type Database = {
           customer_name?: string
           customer_whatsapp?: string
           id?: string
+          payment_method?: string | null
           price?: number
+          receipt_url?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           token?: string | null
@@ -330,6 +336,7 @@ export type Database = {
       }
       services: {
         Row: {
+          allow_in_person_payment: boolean | null
           created_at: string | null
           description: string | null
           duration_min: number
@@ -340,6 +347,7 @@ export type Database = {
           price: number
         }
         Insert: {
+          allow_in_person_payment?: boolean | null
           created_at?: string | null
           description?: string | null
           duration_min: number
@@ -350,6 +358,7 @@ export type Database = {
           price: number
         }
         Update: {
+          allow_in_person_payment?: boolean | null
           created_at?: string | null
           description?: string | null
           duration_min?: number

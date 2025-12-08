@@ -4,19 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DollarSign, Calendar, User } from "lucide-react";
+import { DollarSign, Calendar, User, Eye, CheckCircle, XCircle } from "lucide-react";
 
 interface Booking {
   id: string;
   customer_name: string;
+  customer_whatsapp: string;
   booking_date: string;
   booking_time: string;
   price: number;
   status: string;
   service_id: string;
+  payment_method: string | null;
+  receipt_url: string | null;
+  services?: {
+    name: string;
+  };
 }
 
 export default function Financeiro() {
@@ -26,6 +33,9 @@ export default function Financeiro() {
     pending: 0,
     confirmed: 0,
   });
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
+  const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -34,7 +44,10 @@ export default function Financeiro() {
   async function fetchBookings() {
     const { data, error } = await supabase
       .from("bookings")
-      .select("*")
+      .select(`
+        *,
+        services (name)
+      `)
       .order("booking_date", { ascending: false });
 
     if (error) {
@@ -42,8 +55,8 @@ export default function Financeiro() {
       return;
     }
 
-    setBookings(data || []);
-    calculateStats(data || []);
+    setBookings((data || []) as Booking[]);
+    calculateStats((data || []) as Booking[]);
   }
 
   function calculateStats(bookings: Booking[]) {
@@ -62,7 +75,21 @@ export default function Financeiro() {
     setStats({ total, pending, confirmed });
   }
 
-  async function markAsPaid(id: string) {
+  async function openReceiptDialog(booking: Booking) {
+    setSelectedBooking(booking);
+    
+    if (booking.receipt_url) {
+      const { data } = supabase.storage
+        .from('payment-receipts')
+        .getPublicUrl(booking.receipt_url);
+      
+      setReceiptImageUrl(data.publicUrl);
+    }
+    
+    setReceiptDialogOpen(true);
+  }
+
+  async function confirmPayment(id: string) {
     const { error } = await supabase
       .from("bookings")
       .update({ status: "CONFIRMED" })
@@ -74,6 +101,26 @@ export default function Financeiro() {
     }
 
     toast.success("Pagamento confirmado!");
+    setReceiptDialogOpen(false);
+    fetchBookings();
+  }
+
+  async function rejectPayment(id: string) {
+    const { error } = await supabase
+      .from("bookings")
+      .update({ 
+        status: "PENDING_PAYMENT",
+        receipt_url: null 
+      })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erro ao rejeitar pagamento");
+      return;
+    }
+
+    toast.info("Pagamento rejeitado. Cliente será notificado.");
+    setReceiptDialogOpen(false);
     fetchBookings();
   }
 
@@ -97,6 +144,11 @@ export default function Financeiro() {
         {labels[status] || status}
       </Badge>
     );
+  };
+
+  const getPaymentMethodLabel = (method: string | null) => {
+    if (!method) return "-";
+    return method === "pix" ? "Pix" : "Presencial";
   };
 
   return (
@@ -155,21 +207,37 @@ export default function Financeiro() {
                     <div className="flex-1 space-y-1">
                       <p className="font-medium">{booking.customer_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(new Date(booking.booking_date), "dd/MM/yyyy", {
+                        {booking.services?.name} • {format(new Date(booking.booking_date), "dd/MM/yyyy", {
                           locale: ptBR,
                         })}{" "}
                         às {booking.booking_time}
                       </p>
+                      <p className="text-xs text-muted-foreground">
+                        Pagamento: {getPaymentMethodLabel(booking.payment_method)}
+                        {booking.receipt_url && " • Comprovante enviado"}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <p className="font-bold text-lg">
                         R$ {Number(booking.price).toFixed(2)}
                       </p>
                       {getStatusBadge(booking.status)}
-                      {booking.status === "PENDING_PAYMENT" && (
+                      
+                      {booking.status === "PENDING_PAYMENT" && booking.receipt_url && (
                         <Button
                           size="sm"
-                          onClick={() => markAsPaid(booking.id)}
+                          variant="outline"
+                          onClick={() => openReceiptDialog(booking)}
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver Comprovante
+                        </Button>
+                      )}
+                      
+                      {booking.status === "PENDING_PAYMENT" && !booking.receipt_url && (
+                        <Button
+                          size="sm"
+                          onClick={() => confirmPayment(booking.id)}
                         >
                           Confirmar
                         </Button>
@@ -182,6 +250,55 @@ export default function Financeiro() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog para ver comprovante */}
+      <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Comprovante de Pagamento</DialogTitle>
+          </DialogHeader>
+          
+          {selectedBooking && (
+            <div className="space-y-4">
+              <div className="bg-muted p-4 rounded-lg">
+                <p><strong>Cliente:</strong> {selectedBooking.customer_name}</p>
+                <p><strong>WhatsApp:</strong> {selectedBooking.customer_whatsapp}</p>
+                <p><strong>Serviço:</strong> {selectedBooking.services?.name}</p>
+                <p><strong>Valor:</strong> R$ {Number(selectedBooking.price).toFixed(2)}</p>
+                <p><strong>Data:</strong> {format(new Date(selectedBooking.booking_date), "dd/MM/yyyy", { locale: ptBR })} às {selectedBooking.booking_time}</p>
+              </div>
+
+              {receiptImageUrl && (
+                <div className="border rounded-lg overflow-hidden">
+                  <img 
+                    src={receiptImageUrl} 
+                    alt="Comprovante" 
+                    className="w-full max-h-96 object-contain"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => confirmPayment(selectedBooking.id)}
+                  className="flex-1"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Confirmar Pagamento
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => rejectPayment(selectedBooking.id)}
+                  className="flex-1"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Rejeitar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

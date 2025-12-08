@@ -25,6 +25,7 @@ interface Service {
   price: number;
   is_active: boolean;
   interleaved_blocks: InterleavedBlock[] | null;
+  allow_in_person_payment: boolean;
 }
 
 export default function Servicos() {
@@ -38,6 +39,7 @@ export default function Servicos() {
     price: 0,
     is_active: true,
     interleaved_blocks: null as InterleavedBlock[] | null,
+    allow_in_person_payment: false,
   });
   const [enableInterleaved, setEnableInterleaved] = useState(false);
 
@@ -69,6 +71,7 @@ export default function Servicos() {
         price: Number(service.price),
         is_active: service.is_active,
         interleaved_blocks: service.interleaved_blocks,
+        allow_in_person_payment: service.allow_in_person_payment || false,
       });
       setEnableInterleaved(!!service.interleaved_blocks);
     } else {
@@ -80,6 +83,7 @@ export default function Servicos() {
         price: 0,
         is_active: true,
         interleaved_blocks: null,
+        allow_in_person_payment: false,
       });
       setEnableInterleaved(false);
     }
@@ -123,6 +127,7 @@ export default function Servicos() {
       price: formData.price,
       is_active: formData.is_active,
       interleaved_blocks: enableInterleaved ? (formData.interleaved_blocks as any) : null,
+      allow_in_person_payment: formData.allow_in_person_payment,
     };
 
     if (editingService) {
@@ -244,6 +249,17 @@ export default function Servicos() {
                     }
                   />
                   <Label htmlFor="active">Ativo</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="allow_in_person_payment"
+                    checked={formData.allow_in_person_payment}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, allow_in_person_payment: checked })
+                    }
+                  />
+                  <Label htmlFor="allow_in_person_payment">Permitir Pagamento Presencial</Label>
                 </div>
 
                 <div className="border-t pt-4 space-y-4">
@@ -377,6 +393,11 @@ export default function Servicos() {
                     R$ {Number(service.price).toFixed(2)}
                   </span>
                 </div>
+                {service.allow_in_person_payment && (
+                  <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                    💵 Aceita pagamento presencial
+                  </div>
+                )}
                 {service.interleaved_blocks && (
                   <div className="bg-muted p-2 rounded text-xs space-y-1">
                     <p className="font-medium text-foreground">Bloqueios Intercalados:</p>
