@@ -60,3 +60,10 @@ export function notifyNewBooking(customerName: string, serviceName: string, book
     `${customerName} agendou ${serviceName} para ${new Date(bookingDate).toLocaleDateString('pt-BR')} às ${bookingTime}`
   );
 }
+
+export function notifyCancellationRequest(customerName: string, serviceName: string, bookingDate: string, bookingTime: string) {
+  showNotification(
+    '❌ Solicitação de Cancelamento',
+    `${customerName} solicitou cancelamento de ${serviceName} em ${new Date(bookingDate).toLocaleDateString('pt-BR')} às ${bookingTime}`
+  );
+}

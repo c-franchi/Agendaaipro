@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { notifyCancellationRequest } from "@/utils/pwa";
 
 interface Booking {
   id: string;
@@ -35,6 +36,11 @@ export default function ClienteAgendamentos() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; booking: Booking | null }>({
+    open: false,
+    booking: null,
+  });
 
   useEffect(() => {
     checkAuth();
@@ -57,7 +63,6 @@ export default function ClienteAgendamentos() {
       
       if (!session) return;
 
-      // Buscar perfil do usuário para pegar o WhatsApp
       const { data: profile } = await supabase
         .from("profiles")
         .select("phone")
@@ -69,7 +74,6 @@ export default function ClienteAgendamentos() {
         return;
       }
 
-      // Buscar agendamentos pelo WhatsApp
       const { data, error } = await supabase
         .from("bookings")
         .select(`
@@ -99,12 +103,6 @@ export default function ClienteAgendamentos() {
     navigate("/cliente");
   }
 
-  const [actionDialog, setActionDialog] = useState<{ open: boolean; type: "reschedule" | "cancel"; booking: Booking | null }>({
-    open: false,
-    type: "cancel",
-    booking: null,
-  });
-
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       PENDING_PAYMENT: { label: "Aguardando Pagamento", variant: "outline" },
@@ -121,11 +119,34 @@ export default function ClienteAgendamentos() {
     return booking.status === "PENDING_PAYMENT" || booking.status === "CONFIRMED";
   };
 
-  async function handleBookingAction() {
-    if (!actionDialog.booking || !user) return;
+  // Reagendamento automático - redireciona para a página de agendamento com o serviço pré-selecionado
+  function handleReschedule(booking: Booking) {
+    setRescheduleBooking(booking);
+  }
+
+  async function confirmReschedule() {
+    if (!rescheduleBooking) return;
+
+    // Cancela o agendamento atual e redireciona para novo agendamento
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status: "CANCELED" })
+        .eq("id", rescheduleBooking.id);
+
+      if (error) throw error;
+
+      toast.success("Agendamento anterior cancelado. Selecione um novo horário.");
+      navigate(`/agendar?service=${rescheduleBooking.service_id}`);
+    } catch (error) {
+      toast.error("Erro ao reagendar");
+    }
+  }
+
+  async function handleCancelBooking() {
+    if (!cancelDialog.booking || !user) return;
 
     try {
-      // Get or create conversation for this user
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, phone")
@@ -137,14 +158,13 @@ export default function ClienteAgendamentos() {
         return;
       }
 
-      // Check if conversation exists
+      // Buscar ou criar conversa
       let { data: conversation } = await supabase
         .from("conversations")
         .select("id")
         .eq("user_id", user.id)
         .single();
 
-      // Create conversation if doesn't exist
       if (!conversation) {
         const { data: newConv, error: convError } = await supabase
           .from("conversations")
@@ -160,19 +180,14 @@ export default function ClienteAgendamentos() {
         conversation = newConv;
       }
 
-      const booking = actionDialog.booking;
+      const booking = cancelDialog.booking;
       const serviceName = booking.services?.name || "Serviço";
       const bookingDate = new Date(booking.booking_date).toLocaleDateString("pt-BR");
       const bookingTime = booking.booking_time;
 
-      let message = "";
-      if (actionDialog.type === "cancel") {
-        message = `❌ Solicitação de CANCELAMENTO\n\nServiço: ${serviceName}\nData: ${bookingDate}\nHorário: ${bookingTime}\n\nPor favor, confirme o cancelamento deste agendamento.`;
-      } else {
-        message = `🔄 Solicitação de REAGENDAMENTO\n\nServiço: ${serviceName}\nData: ${bookingDate}\nHorário: ${bookingTime}\n\nGostaria de reagendar este horário. Por favor, entre em contato para definir uma nova data.`;
-      }
+      const message = `❌ Solicitação de CANCELAMENTO\n\nServiço: ${serviceName}\nData: ${bookingDate}\nHorário: ${bookingTime}\n\nPor favor, confirme o cancelamento deste agendamento.`;
 
-      // Send message to conversation
+      // Enviar mensagem
       const { error: msgError } = await supabase.from("messages").insert({
         conversation_id: conversation.id,
         content: message,
@@ -181,14 +196,17 @@ export default function ClienteAgendamentos() {
 
       if (msgError) throw msgError;
 
-      toast.success(
-        actionDialog.type === "cancel"
-          ? "Solicitação de cancelamento enviada! O profissional irá confirmar."
-          : "Solicitação de reagendamento enviada! O profissional entrará em contato."
+      // Notificação push para o admin
+      notifyCancellationRequest(
+        profile.full_name || "Cliente",
+        serviceName,
+        booking.booking_date,
+        bookingTime
       );
 
-      setActionDialog({ open: false, type: "cancel", booking: null });
-      navigate("/cliente/chat");
+      toast.success("Solicitação de cancelamento enviada! O profissional irá confirmar.");
+      setCancelDialog({ open: false, booking: null });
+      loadBookings();
     } catch (error: any) {
       console.error(error);
       toast.error("Erro ao enviar solicitação");
@@ -316,7 +334,7 @@ export default function ClienteAgendamentos() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setActionDialog({ open: true, type: "reschedule", booking })}
+                              onClick={() => handleReschedule(booking)}
                             >
                               <RefreshCw className="w-4 h-4 mr-1" />
                               Reagendar
@@ -324,7 +342,7 @@ export default function ClienteAgendamentos() {
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => setActionDialog({ open: true, type: "cancel", booking })}
+                              onClick={() => setCancelDialog({ open: true, booking })}
                             >
                               <X className="w-4 h-4 mr-1" />
                               Cancelar
@@ -341,22 +359,37 @@ export default function ClienteAgendamentos() {
         </Card>
       </main>
 
-      <AlertDialog open={actionDialog.open} onOpenChange={(open) => setActionDialog({ ...actionDialog, open })}>
+      {/* Dialog de Reagendamento Automático */}
+      <AlertDialog open={!!rescheduleBooking} onOpenChange={(open) => !open && setRescheduleBooking(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionDialog.type === "cancel" ? "Cancelar Agendamento" : "Reagendar Agendamento"}
-            </AlertDialogTitle>
+            <AlertDialogTitle>Reagendar Agendamento</AlertDialogTitle>
             <AlertDialogDescription>
-              {actionDialog.type === "cancel"
-                ? "Deseja solicitar o cancelamento deste agendamento? O profissional será notificado e confirmará o cancelamento."
-                : "Deseja solicitar o reagendamento? O profissional entrará em contato para definir uma nova data."}
+              O agendamento atual será cancelado e você poderá escolher um novo horário para o serviço "{rescheduleBooking?.services?.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleBookingAction}>
-              {actionDialog.type === "cancel" ? "Solicitar Cancelamento" : "Solicitar Reagendamento"}
+            <AlertDialogAction onClick={confirmReschedule}>
+              Continuar para Reagendar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog de Cancelamento */}
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja solicitar o cancelamento deste agendamento? O profissional será notificado e confirmará o cancelamento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelBooking}>
+              Solicitar Cancelamento
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
