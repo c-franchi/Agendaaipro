@@ -11,8 +11,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, isSameDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Plus, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { Plus, Trash2, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Block {
   id: string;
@@ -40,6 +50,10 @@ export default function Agenda() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [cancelDialog, setCancelDialog] = useState<{ open: boolean; booking: Booking | null }>({
+    open: false,
+    booking: null,
+  });
   const [newBlock, setNewBlock] = useState({
     start_datetime: "",
     end_datetime: "",
@@ -123,12 +137,47 @@ export default function Agenda() {
     fetchBlocks();
   }
 
+  async function handleCancelBooking() {
+    if (!cancelDialog.booking) return;
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status: "CANCELED" })
+        .eq("id", cancelDialog.booking.id);
+
+      if (error) throw error;
+
+      toast.success("Agendamento cancelado com sucesso!");
+      setCancelDialog({ open: false, booking: null });
+      fetchBookings();
+    } catch (error) {
+      toast.error("Erro ao cancelar agendamento");
+    }
+  }
+
+  async function handleConfirmBooking(bookingId: string) {
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ status: "CONFIRMED" })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast.success("Agendamento confirmado!");
+      fetchBookings();
+    } catch (error) {
+      toast.error("Erro ao confirmar agendamento");
+    }
+  }
+
   function getStatusBadge(status: string) {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
       PENDING_PAYMENT: { variant: "outline", label: "Pendente" },
       CONFIRMED: { variant: "default", label: "Confirmado" },
       COMPLETED: { variant: "secondary", label: "Concluído" },
-      CANCELLED: { variant: "destructive", label: "Cancelado" },
+      CANCELED: { variant: "destructive", label: "Cancelado" },
     };
     const config = variants[status] || { variant: "outline" as const, label: status };
     return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -311,6 +360,30 @@ export default function Agenda() {
                       <p className="text-xs text-muted-foreground mt-1">
                         {booking.customer_whatsapp}
                       </p>
+                      
+                      {/* Ações do Admin */}
+                      {booking.status !== "CANCELED" && booking.status !== "COMPLETED" && (
+                        <div className="flex gap-2 mt-3">
+                          {booking.status === "PENDING_PAYMENT" && (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleConfirmBooking(booking.id)}
+                            >
+                              <Check className="w-3 h-3 mr-1" />
+                              Confirmar
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setCancelDialog({ open: true, booking })}
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Cancelar
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))
                 )}
@@ -362,6 +435,25 @@ export default function Agenda() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de Cancelamento */}
+      <AlertDialog open={cancelDialog.open} onOpenChange={(open) => setCancelDialog({ ...cancelDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar o agendamento de "{cancelDialog.booking?.customer_name}" 
+              para {cancelDialog.booking?.services?.name}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCancelBooking} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Cancelar Agendamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
