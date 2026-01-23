@@ -1,4 +1,4 @@
-# ✂️ Barber-On
+# ✂️ AgendAÍ Pro
 
 Sistema completo de gerenciamento para barbearias com agendamento online, pagamentos PIX e comunicação integrada.
 
@@ -36,7 +36,7 @@ Sistema completo de gerenciamento para barbearias com agendamento online, pagame
 git clone <seu-repositorio>
 
 # Acesse a pasta
-cd barber-on
+cd agendaaipro
 
 # Instale as dependências
 npm install
@@ -71,4 +71,4 @@ Proprietário - Todos os direitos reservados.
 
 ---
 
-**Barber-On** - Seu estilo começa aqui! 💈
+**AgendAÍ Pro** - Seu estilo começa aqui! 💈
