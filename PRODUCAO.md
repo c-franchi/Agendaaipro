@@ -10,7 +10,7 @@
 - ✅ Autenticação JWT
 - ✅ Chat interno com mensagens em tempo real
 - ✅ Notificações via chat
-- ✅ Banco de dados completo (Lovable Cloud/Supabase)
+- ✅ Banco de dados completo (Backend em Nuvem)
 
 ---
 
@@ -246,7 +246,7 @@ Todos precisam de:
 
 ## 💰 Custos Estimados Mensais
 
-### Lovable Cloud (Backend)
+### Hospedagem Backend
 - **Gratuito** até certo limite
 - **Pago:** A partir de ~$25/mês (uso real)
 
