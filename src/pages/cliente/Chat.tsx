@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ interface Conversation {
   customer_name: string;
 }
 
+// Chat do cliente para atendimento com o profissional
 export default function ClienteChat() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -30,10 +32,12 @@ export default function ClienteChat() {
   const [sending, setSending] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Verifica sessão e carrega conversa ao iniciar
   useEffect(() => {
     checkAuthAndLoadData();
   }, []);
 
+  // Valida autenticação e carrega conversa do cliente
   async function checkAuthAndLoadData() {
     const { data: { session } } = await supabase.auth.getSession();
     
@@ -48,6 +52,7 @@ export default function ClienteChat() {
     setLoading(false);
   }
 
+  // Busca conversa e mensagens do cliente
   async function loadConversation(userId: string) {
     // Get conversation for this user
     const { data: convData } = await supabase
@@ -94,6 +99,7 @@ export default function ClienteChat() {
     };
   }
 
+  // Envia mensagem do cliente para o admin
   async function handleSendMessage(e: React.FormEvent) {
     e.preventDefault();
     if (!newMessage.trim() || !conversation || sending) return;
@@ -118,6 +124,7 @@ export default function ClienteChat() {
     }
   }
 
+  // Realiza logout do cliente
   async function handleLogout() {
     await supabase.auth.signOut();
     toast.success("Logout realizado");
@@ -134,6 +141,7 @@ export default function ClienteChat() {
     );
   }
 
+  // Cria uma nova conversa caso não exista
   async function startConversation() {
     if (!userId) return;
 

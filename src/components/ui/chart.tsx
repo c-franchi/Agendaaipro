@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Chart
 import * as React from "react";
 import * as RechartsPrimitive from "recharts";
 

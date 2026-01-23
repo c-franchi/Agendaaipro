@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Table
 import * as React from "react";
 
 import { cn } from "@/lib/utils";

@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
 
+// Área administrativa com login e criação do primeiro admin
 export default function Admin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -21,6 +23,7 @@ export default function Admin() {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
+  // Autentica o admin e valida a role
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -57,6 +60,7 @@ export default function Admin() {
     }
   }
 
+  // Cria o primeiro usuário admin e atribui a role
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);

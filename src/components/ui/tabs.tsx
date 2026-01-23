@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Tabs
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 

@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Accordion
 import * as React from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";

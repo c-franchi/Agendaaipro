@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,7 @@ interface Booking {
   };
 }
 
+// Painel financeiro com transações e comprovantes
 export default function Financeiro() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [stats, setStats] = useState({
@@ -37,10 +39,12 @@ export default function Financeiro() {
   const [receiptDialogOpen, setReceiptDialogOpen] = useState(false);
   const [receiptImageUrl, setReceiptImageUrl] = useState<string | null>(null);
 
+  // Carrega transações ao iniciar
   useEffect(() => {
     fetchBookings();
   }, []);
 
+  // Busca agendamentos e calcula estatísticas
   async function fetchBookings() {
     const { data, error } = await supabase
       .from("bookings")
@@ -59,6 +63,7 @@ export default function Financeiro() {
     calculateStats((data || []) as Booking[]);
   }
 
+  // Calcula totais e pendências financeiras
   function calculateStats(bookings: Booking[]) {
     const total = bookings
       .filter((b) => b.status === "CONFIRMED" || b.status === "COMPLETED")
@@ -75,6 +80,7 @@ export default function Financeiro() {
     setStats({ total, pending, confirmed });
   }
 
+  // Abre modal do comprovante e carrega imagem
   async function openReceiptDialog(booking: Booking) {
     setSelectedBooking(booking);
     
@@ -89,6 +95,7 @@ export default function Financeiro() {
     setReceiptDialogOpen(true);
   }
 
+  // Confirma pagamento após validação do comprovante
   async function confirmPayment(id: string) {
     const { error } = await supabase
       .from("bookings")
@@ -105,6 +112,7 @@ export default function Financeiro() {
     fetchBookings();
   }
 
+  // Rejeita comprovante e retorna status pendente
   async function rejectPayment(id: string) {
     const { error } = await supabase
       .from("bookings")
@@ -124,6 +132,7 @@ export default function Financeiro() {
     fetchBookings();
   }
 
+  // Retorna badge com rótulo de status
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
       PENDING_PAYMENT: "outline",
@@ -146,6 +155,7 @@ export default function Financeiro() {
     );
   };
 
+  // Converte método de pagamento para rótulo exibível
   const getPaymentMethodLabel = (method: string | null) => {
     if (!method) return "-";
     return method === "pix" ? "Pix" : "Presencial";

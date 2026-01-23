@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -18,6 +19,7 @@ interface Admin {
   created_at: string;
 }
 
+// Gestão de administradores do sistema
 export default function Usuarios() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,11 +29,13 @@ export default function Usuarios() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addingAdmin, setAddingAdmin] = useState(false);
 
+  // Carrega admins e usuário atual
   useEffect(() => {
     loadAdmins();
     getCurrentUser();
   }, []);
 
+  // Obtém usuário logado para controle de permissões
   async function getCurrentUser() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -39,6 +43,7 @@ export default function Usuarios() {
     }
   }
 
+  // Carrega lista de administradores
   async function loadAdmins() {
     try {
       setLoading(true);
@@ -82,6 +87,7 @@ export default function Usuarios() {
     }
   }
 
+  // Remove permissão de admin de um usuário
   async function handleRemoveAdmin(adminId: string) {
     if (adminId === currentUserId) {
       toast.error("Você não pode remover a si mesmo!");
@@ -109,6 +115,7 @@ export default function Usuarios() {
     }
   }
 
+  // Cria novo admin via função segura
   async function handleAddAdmin(e: React.FormEvent) {
     e.preventDefault();
     setAddingAdmin(true);

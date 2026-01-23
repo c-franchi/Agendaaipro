@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Collapsible
 import * as CollapsiblePrimitive from "@radix-ui/react-collapsible";
 
 const Collapsible = CollapsiblePrimitive.Root;

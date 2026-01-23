@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Sonner (toasts)
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, toast } from "sonner";
 

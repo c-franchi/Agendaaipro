@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ interface Booking {
   };
 }
 
+// Área do cliente para visualizar e gerenciar agendamentos
 export default function ClienteAgendamentos() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -42,11 +44,13 @@ export default function ClienteAgendamentos() {
     booking: null,
   });
 
+  // Valida sessão e carrega agendamentos ao iniciar
   useEffect(() => {
     checkAuth();
     loadBookings();
   }, []);
 
+  // Verifica se o cliente está autenticado
   async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -56,6 +60,7 @@ export default function ClienteAgendamentos() {
     setUser(session.user);
   }
 
+  // Carrega agendamentos do cliente pelo telefone
   async function loadBookings() {
     try {
       setLoading(true);
@@ -98,11 +103,13 @@ export default function ClienteAgendamentos() {
     }
   }
 
+  // Realiza logout do cliente
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/cliente");
   }
 
+  // Converte status para badge amigável
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
       PENDING_PAYMENT: { label: "Aguardando Pagamento", variant: "outline" },
@@ -115,15 +122,18 @@ export default function ClienteAgendamentos() {
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>;
   };
 
+  // Define se o agendamento pode ser alterado
   const canModifyBooking = (booking: Booking) => {
     return booking.status === "PENDING_PAYMENT" || booking.status === "CONFIRMED";
   };
 
   // Reagendamento automático - redireciona para a página de agendamento com o serviço pré-selecionado
+  // Armazena agendamento para reagendamento
   function handleReschedule(booking: Booking) {
     setRescheduleBooking(booking);
   }
 
+  // Cancela o agendamento e redireciona para novo horário
   async function confirmReschedule() {
     if (!rescheduleBooking) return;
 
@@ -143,6 +153,7 @@ export default function ClienteAgendamentos() {
     }
   }
 
+  // Solicita cancelamento via chat com o admin
   async function handleCancelBooking() {
     if (!cancelDialog.booking || !user) return;
 

@@ -1,7 +1,9 @@
+// Sistema desenvolvido por Dev Nei
 import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
+// Hook que identifica se a viewport está em tamanho mobile
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
 

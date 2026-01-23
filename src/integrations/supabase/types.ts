@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 export type Json =
   | string
   | number

@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Slider
 import * as React from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 

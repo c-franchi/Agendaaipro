@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,7 @@ interface Service {
   allow_in_person_payment: boolean;
 }
 
+// Gestão administrativa de serviços e preços
 export default function Servicos() {
   const [services, setServices] = useState<Service[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,10 +45,12 @@ export default function Servicos() {
   });
   const [enableInterleaved, setEnableInterleaved] = useState(false);
 
+  // Carrega lista de serviços ao iniciar
   useEffect(() => {
     fetchServices();
   }, []);
 
+  // Busca serviços cadastrados
   async function fetchServices() {
     const { data, error } = await supabase
       .from("services")
@@ -61,6 +65,7 @@ export default function Servicos() {
     setServices((data || []) as unknown as Service[]);
   }
 
+  // Abre modal para criar ou editar serviço
   function openDialog(service?: Service) {
     if (service) {
       setEditingService(service);
@@ -90,6 +95,7 @@ export default function Servicos() {
     setDialogOpen(true);
   }
 
+  // Gera blocos intercalados com base na duração
   function generateInterleavedBlocks() {
     const totalDuration = formData.duration_min;
     const blockSize = 30; // blocos de 30 minutos
@@ -106,6 +112,7 @@ export default function Servicos() {
     setFormData({ ...formData, interleaved_blocks: blocks });
   }
 
+  // Atualiza status de bloqueio de um bloco
   function updateBlockStatus(index: number, blocked: boolean) {
     if (!formData.interleaved_blocks) return;
     
@@ -114,6 +121,7 @@ export default function Servicos() {
     setFormData({ ...formData, interleaved_blocks: updated });
   }
 
+  // Salva serviço (criação ou edição)
   async function handleSaveService() {
     if (!formData.name || formData.price <= 0 || formData.duration_min <= 0) {
       toast.error("Preencha todos os campos obrigatórios");
@@ -157,6 +165,7 @@ export default function Servicos() {
     fetchServices();
   }
 
+  // Remove serviço selecionado
   async function handleDeleteService(id: string) {
     if (!confirm("Tem certeza que deseja excluir este serviço?")) return;
 

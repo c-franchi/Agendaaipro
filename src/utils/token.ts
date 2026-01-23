@@ -1,5 +1,7 @@
+// Sistema desenvolvido por Dev Nei
 // Utilitário para geração e validação de tokens JWT simples
 
+// Gera um token de agendamento com validade de 48 horas
 export function generateBookingToken(bookingId: string): string {
   const payload = {
     bookingId,
@@ -11,6 +13,7 @@ export function generateBookingToken(bookingId: string): string {
   return btoa(JSON.stringify(payload));
 }
 
+// Valida o token e retorna o status e o id do agendamento
 export function validateToken(token: string): { valid: boolean; bookingId?: string } {
   try {
     const decoded = JSON.parse(atob(token));

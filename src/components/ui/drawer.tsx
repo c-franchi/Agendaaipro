@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Drawer
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 

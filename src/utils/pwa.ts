@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Registra o Service Worker para habilitar PWA e cache offline
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -13,6 +15,7 @@ export function registerServiceWorker() {
   }
 }
 
+// Solicita permissão do usuário para notificações do navegador
 export function requestNotificationPermission() {
   if ('Notification' in window && 'serviceWorker' in navigator) {
     Notification.requestPermission().then((permission) => {
@@ -23,6 +26,7 @@ export function requestNotificationPermission() {
   }
 }
 
+// Exibe uma notificação via Service Worker quando permitido
 export function showNotification(title: string, body: string) {
   if ('Notification' in window && Notification.permission === 'granted') {
     navigator.serviceWorker.ready.then((registration) => {
@@ -35,6 +39,7 @@ export function showNotification(title: string, body: string) {
   }
 }
 
+// Agenda um lembrete 1 hora antes do horário marcado
 export function scheduleNotification(bookingDate: string, bookingTime: string, customerName: string) {
   const [year, month, day] = bookingDate.split('-').map(Number);
   const [hour, minute] = bookingTime.split(':').map(Number);
@@ -54,6 +59,7 @@ export function scheduleNotification(bookingDate: string, bookingTime: string, c
   }
 }
 
+// Notifica o profissional sobre um novo agendamento
 export function notifyNewBooking(customerName: string, serviceName: string, bookingDate: string, bookingTime: string) {
   showNotification(
     '🎉 Novo Agendamento!',
@@ -61,6 +67,7 @@ export function notifyNewBooking(customerName: string, serviceName: string, book
   );
 }
 
+// Notifica o profissional sobre pedido de cancelamento
 export function notifyCancellationRequest(customerName: string, serviceName: string, bookingDate: string, bookingTime: string) {
   showNotification(
     '❌ Solicitação de Cancelamento',

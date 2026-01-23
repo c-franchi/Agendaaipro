@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User, Mail, Lock, Save } from "lucide-react";
 
+// Perfil do administrador com atualização de dados e senha
 export default function Perfil() {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -16,10 +18,12 @@ export default function Perfil() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Carrega dados do admin ao iniciar
   useEffect(() => {
     loadProfile();
   }, []);
 
+  // Busca perfil e e-mail do usuário autenticado
   async function loadProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -41,6 +45,7 @@ export default function Perfil() {
     }
   }
 
+  // Atualiza nome do admin no perfil
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -66,6 +71,7 @@ export default function Perfil() {
     }
   }
 
+  // Atualiza a senha do admin
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
 

@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Popover
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 

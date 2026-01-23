@@ -1,5 +1,7 @@
+// Sistema desenvolvido por Dev Nei
 // Utilitário para gerar payload Pix EMVCo e QR Code
 
+// Calcula o CRC16 necessário no padrão EMV
 function generateCRC16(str: string): string {
   const polynomial = 0x1021;
   let crc = 0xFFFF;
@@ -18,11 +20,13 @@ function generateCRC16(str: string): string {
   return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
 }
 
+// Formata um campo EMV com id e tamanho
 function formatEMV(id: string, value: string): string {
   const size = value.length.toString().padStart(2, '0');
   return `${id}${size}${value}`;
 }
 
+// Estrutura de dados para gerar o payload Pix
 export interface PixPayload {
   chavePix: string;
   nomeRecebedor: string;
@@ -31,6 +35,7 @@ export interface PixPayload {
   txid?: string;
 }
 
+// Monta o payload Pix no formato EMVCo
 export function generatePixPayload(payload: PixPayload): string {
   const {
     chavePix,
@@ -85,6 +90,7 @@ export function generatePixPayload(payload: PixPayload): string {
   return pixString;
 }
 
+// Gera QR Code a partir do payload Pix
 export async function generatePixQRCode(pixPayload: string): Promise<string> {
   const QRCode = (await import('qrcode')).default;
   return QRCode.toDataURL(pixPayload, {

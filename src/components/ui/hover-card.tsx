@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Hover Card
 import * as React from "react";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 

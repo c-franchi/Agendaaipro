@@ -1,7 +1,9 @@
+// Sistema desenvolvido por Dev Nei
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
+// Limites e tempos de exibição dos toasts
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
 
@@ -21,6 +23,7 @@ const actionTypes = {
 
 let count = 0;
 
+// Gera ids incrementais para os toasts
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER;
   return count.toString();
@@ -52,6 +55,7 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
+// Adiciona toast à fila de remoção automática
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return;
@@ -68,6 +72,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout);
 };
 
+// Redutor central para gerenciar o estado dos toasts
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -125,6 +130,7 @@ const listeners: Array<(state: State) => void> = [];
 
 let memoryState: State = { toasts: [] };
 
+// Dispara ações e notifica os listeners inscritos
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action);
   listeners.forEach((listener) => {
@@ -134,6 +140,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
+// Cria um toast e retorna controles de atualização e dismiss
 function toast({ ...props }: Toast) {
   const id = genId();
 
@@ -163,6 +170,7 @@ function toast({ ...props }: Toast) {
   };
 }
 
+// Hook principal para consumir o estado de toasts na UI
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 

@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,8 +22,10 @@ import Perfil from "./pages/admin/Perfil";
 import Usuarios from "./pages/admin/Usuarios";
 import NotFound from "./pages/NotFound";
 
+// Cliente global de cache e requisições assíncronas
 const queryClient = new QueryClient();
 
+// Componente raiz com providers e rotas do sistema
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

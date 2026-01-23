@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Service Worker para cache offline e notificações
 const CACHE_NAME = 'barber-on-v1';
 const urlsToCache = [
   '/',
@@ -6,6 +8,7 @@ const urlsToCache = [
   '/src/index.css'
 ];
 
+// Instalação: armazena recursos essenciais
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -13,6 +16,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// Estratégia de cache: responde do cache e busca na rede como fallback
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
@@ -20,6 +24,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Limpa caches antigos ao ativar
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -54,6 +59,7 @@ self.addEventListener('push', (event) => {
   );
 });
 
+// Clique na notificação: abre a aplicação
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   

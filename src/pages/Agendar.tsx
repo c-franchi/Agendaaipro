@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { scheduleNotification, notifyNewBooking } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+// Fluxo de agendamento de serviços
 export default function Agendar() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -22,11 +24,13 @@ export default function Agendar() {
   const [userProfile, setUserProfile] = useState<{ full_name: string; phone: string } | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
+  // Carrega serviços e dados do cliente ao iniciar
   useEffect(() => {
     loadServices();
     loadUserProfile();
   }, []);
 
+  // Busca perfil do usuário autenticado
   async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
@@ -40,12 +44,14 @@ export default function Agendar() {
     }
   }
 
+  // Atualiza horários disponíveis ao mudar data/serviço
   useEffect(() => {
     if (selectedDate && selectedService) {
       loadAvailableSlots();
     }
   }, [selectedDate, selectedService]);
 
+  // Carrega serviços ativos para o agendamento
   async function loadServices() {
     const { data } = await supabase
       .from("services")
@@ -54,6 +60,7 @@ export default function Agendar() {
     setServices(data || []);
   }
 
+  // Calcula horários disponíveis com base nas regras e agendamentos
   async function loadAvailableSlots() {
     if (!selectedDate || !selectedService) return;
 
@@ -89,6 +96,7 @@ export default function Agendar() {
       .in("status", ["PENDING_PAYMENT", "CONFIRMED"]);
 
     // Função auxiliar para verificar conflito entre horários
+    // Verifica se um horário conflita com agendamentos existentes
     function hasConflict(newTime: string, newService: any): boolean {
       if (!bookings) return false;
 
@@ -114,12 +122,14 @@ export default function Agendar() {
     }
 
     // Converter string de tempo para minutos desde meia-noite
+    // Converte HH:mm para minutos desde meia-noite
     function timeToMinutes(time: string): number {
       const [hour, min] = time.split(':').map(Number);
       return hour * 60 + min;
     }
 
     // Obter blocos de tempo ocupados para um agendamento
+    // Retorna blocos ocupados conforme duração/intercalação do serviço
     function getOccupiedBlocks(startMin: number, service: any): Array<{start: number, end: number}> {
       const blocks: Array<{start: number, end: number}> = [];
       
@@ -146,6 +156,7 @@ export default function Agendar() {
     }
 
     // Verificar se dois blocos se sobrepõem
+    // Determina se dois blocos de tempo se sobrepõem
     function blocksOverlap(block1: {start: number, end: number}, block2: {start: number, end: number}): boolean {
       return block1.start < block2.end && block2.start < block1.end;
     }
@@ -174,6 +185,7 @@ export default function Agendar() {
     setAvailableSlots(slots);
   }
 
+  // Valida dados antes de abrir o modal de confirmação
   async function handleConfirmBooking() {
     if (!selectedService || !selectedDate || !selectedTime) {
       toast.error("Selecione o serviço, data e horário");
@@ -189,6 +201,7 @@ export default function Agendar() {
     setShowConfirmDialog(true);
   }
 
+  // Persiste o agendamento e dispara notificações
   async function handleSubmit() {
     setShowConfirmDialog(false);
     setLoading(true);

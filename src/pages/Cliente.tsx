@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { MessageCircle, ArrowLeft } from "lucide-react";
 
+// Área do cliente para login e cadastro
 export default function Cliente() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -23,6 +25,7 @@ export default function Cliente() {
   const [signupFullName, setSignupFullName] = useState("");
   const [signupPhone, setSignupPhone] = useState("");
 
+  // Realiza autenticação do cliente
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -45,6 +48,7 @@ export default function Cliente() {
     }
   }
 
+  // Realiza cadastro do cliente no Supabase
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);

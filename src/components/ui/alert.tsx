@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Componente de interface: Alert
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 

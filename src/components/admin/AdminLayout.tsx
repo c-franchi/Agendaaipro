@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,15 +11,18 @@ interface AdminLayoutProps {
   children: ReactNode;
 }
 
+// Layout base do painel administrativo com navegação e proteção
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Valida autenticação do admin ao carregar o layout
   useEffect(() => {
     checkAuth();
   }, []);
 
+  // Verifica sessão e role de administrador
   async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -41,6 +45,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }
 
+  // Finaliza sessão do administrador
   async function handleLogout() {
     await supabase.auth.signOut();
     toast.success("Logout realizado");
@@ -56,6 +61,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
   ];
 
+  // Conteúdo reutilizável do menu lateral
   const MenuContent = () => (
     <>
       <div className="mb-8">

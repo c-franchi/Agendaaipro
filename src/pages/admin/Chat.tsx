@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect, useRef } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ interface Message {
   created_at: string;
 }
 
+// Chat administrativo para conversar com clientes
 export default function Chat() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -39,12 +41,14 @@ export default function Chat() {
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Inicializa conversas e assinaturas em tempo real
   useEffect(() => {
     loadConversations();
     subscribeToMessages();
     subscribeToConversations();
   }, []);
 
+  // Carrega mensagens quando uma conversa é selecionada
   useEffect(() => {
     if (selectedConversation) {
       loadMessages(selectedConversation.id);
@@ -52,14 +56,17 @@ export default function Chat() {
     }
   }, [selectedConversation]);
 
+  // Mantém o scroll no fim quando chegam novas mensagens
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Rola o chat para a última mensagem
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Carrega conversas ativas
   async function loadConversations() {
     const { data, error } = await supabase
       .from("conversations")
@@ -75,6 +82,7 @@ export default function Chat() {
     setConversations(data || []);
   }
 
+  // Carrega mensagens da conversa selecionada
   async function loadMessages(conversationId: string) {
     const { data, error } = await supabase
       .from("messages")
@@ -90,6 +98,7 @@ export default function Chat() {
     setMessages((data || []) as Message[]);
   }
 
+  // Marca conversa como lida
   async function markAsRead(conversationId: string) {
     await supabase
       .from("conversations")
@@ -97,6 +106,7 @@ export default function Chat() {
       .eq("id", conversationId);
   }
 
+  // Assina novas mensagens em tempo real
   function subscribeToMessages() {
     const channel = supabase
       .channel("messages-changes")
@@ -121,6 +131,7 @@ export default function Chat() {
     };
   }
 
+  // Assina mudanças nas conversas
   function subscribeToConversations() {
     const channel = supabase
       .channel("conversations-changes")
@@ -142,6 +153,7 @@ export default function Chat() {
     };
   }
 
+  // Envia mensagem do admin para o cliente
   async function handleSendMessage() {
     if (!newMessage.trim() || !selectedConversation) return;
 

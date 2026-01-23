@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { generatePixPayload, generatePixQRCode, PixPayload } from "@/utils/pix";
 import { validateToken } from "@/utils/token";
 import { Copy, Download, ArrowLeft, CheckCircle, Upload, CreditCard, Banknote } from "lucide-react";
 
+// Página de pagamento e envio de comprovante
 export default function Pagar() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -25,12 +27,14 @@ export default function Pagar() {
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Carrega dados do agendamento via parâmetros da URL
   useEffect(() => {
     if (bookingId && token) {
       loadBooking();
     }
   }, [bookingId, token]);
 
+  // Busca agendamento, serviço e configurações para pagamento
   async function loadBooking() {
     if (!bookingId || !token) return;
 
@@ -74,6 +78,7 @@ export default function Pagar() {
     setLoading(false);
   }
 
+  // Gera payload e QR Code Pix com base no valor do serviço
   async function generatePixCode() {
     if (!settings || !booking) return;
     
@@ -92,6 +97,7 @@ export default function Pagar() {
     setQrCodeUrl(qrCode);
   }
 
+  // Define método de pagamento e atualiza no banco
   async function selectPaymentMethod(method: "pix" | "presencial") {
     setPaymentMethod(method);
     
@@ -106,11 +112,13 @@ export default function Pagar() {
     }
   }
 
+  // Copia o código Pix para a área de transferência
   function copyPixCode() {
     navigator.clipboard.writeText(pixCode);
     toast.success("Código Pix copiado!");
   }
 
+  // Faz download da imagem do QR Code
   function downloadQRCode() {
     const link = document.createElement('a');
     link.href = qrCodeUrl;
@@ -118,6 +126,7 @@ export default function Pagar() {
     link.click();
   }
 
+  // Envia comprovante para o storage e atualiza o agendamento
   async function handleUploadReceipt(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file || !bookingId) return;
@@ -160,6 +169,7 @@ export default function Pagar() {
     }
   }
 
+  // Confirma pagamento presencial e marca o agendamento
   async function confirmInPersonPayment() {
     if (!bookingId) return;
 

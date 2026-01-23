@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,13 +12,16 @@ import haircut3 from "@/assets/haircut3.jpg";
 import haircut4 from "@/assets/haircut4.jpg";
 import beard1 from "@/assets/beard1.jpg";
 import shave1 from "@/assets/shave1.jpg";
+// Página pública com apresentação, galeria e serviços
 const Index = () => {
   const [barber, setBarber] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // Carrega dados do barbeiro e serviços ao iniciar
   useEffect(() => {
     loadData();
   }, []);
+  // Busca dados do perfil e serviços ativos
   async function loadData() {
     const {
       data: barberData
@@ -36,6 +40,7 @@ const Index = () => {
       if (titleEl) titleEl.textContent = barberData.name;
     }
   }
+  // Lista de imagens para a galeria
   const galleryImages = [haircut1, haircut2, haircut3, haircut4, beard1, shave1];
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">

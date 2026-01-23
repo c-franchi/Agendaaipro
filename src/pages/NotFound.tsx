@@ -1,9 +1,11 @@
+// Sistema desenvolvido por Dev Nei
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
 const NotFound = () => {
   const location = useLocation();
 
+  // Registra tentativa de acesso a rota inexistente
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);

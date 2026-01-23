@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,7 @@ interface Booking {
   };
 }
 
+// Agenda administrativa para bloqueios e gestão de agendamentos
 export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -60,11 +62,13 @@ export default function Agenda() {
     reason: "",
   });
 
+  // Atualiza dados quando o mês muda
   useEffect(() => {
     fetchBlocks();
     fetchBookings();
   }, [currentMonth]);
 
+  // Carrega bloqueios de agenda
   async function fetchBlocks() {
     const { data, error } = await supabase
       .from("blocks")
@@ -79,6 +83,7 @@ export default function Agenda() {
     setBlocks(data || []);
   }
 
+  // Carrega agendamentos do mês selecionado
   async function fetchBookings() {
     const startDate = startOfMonth(currentMonth);
     const endDate = endOfMonth(currentMonth);
@@ -102,6 +107,7 @@ export default function Agenda() {
     setBookings(data || []);
   }
 
+  // Cria um novo bloqueio de horário
   async function handleCreateBlock() {
     if (!newBlock.start_datetime || !newBlock.end_datetime) {
       toast.error("Preencha as datas de início e fim");
@@ -125,6 +131,7 @@ export default function Agenda() {
     fetchBlocks();
   }
 
+  // Remove um bloqueio existente
   async function handleDeleteBlock(id: string) {
     const { error } = await supabase.from("blocks").delete().eq("id", id);
 
@@ -137,6 +144,7 @@ export default function Agenda() {
     fetchBlocks();
   }
 
+  // Cancela um agendamento selecionado
   async function handleCancelBooking() {
     if (!cancelDialog.booking) return;
 
@@ -156,6 +164,7 @@ export default function Agenda() {
     }
   }
 
+  // Confirma um agendamento pendente
   async function handleConfirmBooking(bookingId: string) {
     try {
       const { error } = await supabase
@@ -172,6 +181,7 @@ export default function Agenda() {
     }
   }
 
+  // Retorna badge de status para a tabela
   function getStatusBadge(status: string) {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", label: string }> = {
       PENDING_PAYMENT: { variant: "outline", label: "Pendente" },
@@ -183,12 +193,14 @@ export default function Agenda() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   }
 
+  // Filtra agendamentos por dia
   function getBookingsForDate(date: Date) {
     return bookings.filter((booking) =>
       isSameDay(new Date(booking.booking_date), date)
     );
   }
 
+  // Retorna dias do mês que possuem agendamentos
   function getDaysWithBookings() {
     return bookings.map((booking) => new Date(booking.booking_date));
   }

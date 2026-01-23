@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { LogOut, ArrowLeft, Save, Calendar, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
+// Perfil do cliente com atualização de dados e senha
 export default function ClientePerfil() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -19,10 +21,12 @@ export default function ClientePerfil() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Carrega dados do cliente ao iniciar
   useEffect(() => {
     loadProfile();
   }, []);
 
+  // Busca perfil e dados do cliente autenticado
   async function loadProfile() {
     try {
       setLoading(true);
@@ -54,6 +58,7 @@ export default function ClientePerfil() {
     }
   }
 
+  // Salva alterações no perfil do cliente
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -78,6 +83,7 @@ export default function ClientePerfil() {
     }
   }
 
+  // Atualiza a senha do cliente
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
 
@@ -111,6 +117,7 @@ export default function ClientePerfil() {
     }
   }
 
+  // Realiza logout do cliente
   async function handleLogout() {
     await supabase.auth.signOut();
     navigate("/cliente");

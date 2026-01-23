@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,27 +51,32 @@ const WEEKDAY_NAMES = [
   "Sábado",
 ];
 
+// Configurações gerais do sistema, perfil e horários
 export default function Configuracoes() {
   const [settings, setSettings] = useState<Settings>({});
   const [profile, setProfile] = useState<BarberProfile>({});
   const [schedules, setSchedules] = useState<WeekdaySchedule[]>([]);
 
+  // Carrega configurações e dados iniciais
   useEffect(() => {
     fetchSettings();
     fetchProfile();
     fetchSchedules();
   }, []);
 
+  // Busca configurações globais do sistema
   async function fetchSettings() {
     const { data } = await supabase.from("settings").select("*").single();
     if (data) setSettings(data);
   }
 
+  // Busca perfil do barbeiro
   async function fetchProfile() {
     const { data } = await supabase.from("barber_profile").select("*").single();
     if (data) setProfile(data);
   }
 
+  // Busca regras de disponibilidade por dia
   async function fetchSchedules() {
     const { data } = await supabase
       .from("availability_rules")
@@ -92,6 +98,7 @@ export default function Configuracoes() {
     }
   }
 
+  // Salva configurações gerais
   async function handleSaveSettings() {
     const { data: existing } = await supabase.from("settings").select("id").single();
     
@@ -107,6 +114,7 @@ export default function Configuracoes() {
     toast.success("Configurações salvas!");
   }
 
+  // Salva informações do perfil do barbeiro
   async function handleSaveProfile() {
     if (!profile.name) {
       toast.error("Nome é obrigatório");
@@ -127,6 +135,7 @@ export default function Configuracoes() {
     toast.success("Perfil atualizado!");
   }
 
+  // Persiste horários semanais de atendimento
   async function handleSaveSchedules() {
     // Deletar todas as regras existentes
     await supabase.from("availability_rules").delete().neq("weekday", -1);
@@ -151,6 +160,7 @@ export default function Configuracoes() {
     toast.success("Horários salvos!");
   }
 
+  // Atualiza o estado de um dia da semana
   function updateSchedule(weekday: number, field: keyof WeekdaySchedule, value: any) {
     setSchedules((prev) =>
       prev.map((s) => (s.weekday === weekday ? { ...s, [field]: value } : s))

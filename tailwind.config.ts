@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Configuração do Tailwind CSS
 import type { Config } from "tailwindcss";
 
 export default {

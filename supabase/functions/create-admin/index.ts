@@ -1,3 +1,5 @@
+// Sistema desenvolvido por Dev Nei
+// Edge Function para criação segura de administradores
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.74.0'
 
 Deno.serve(async (req) => {
@@ -6,11 +8,13 @@ Deno.serve(async (req) => {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   }
 
+  // Resposta rápida para preflight CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // Cliente Supabase com service role para operações administrativas
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',

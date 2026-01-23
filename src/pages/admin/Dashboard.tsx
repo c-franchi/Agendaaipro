@@ -1,3 +1,4 @@
+// Sistema desenvolvido por Dev Nei
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Calendar, Clock, DollarSign, Users } from "lucide-react";
 import { toast } from "sonner";
 
+// Dashboard administrativo com estatísticas e agendamentos recentes
 export default function Dashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -16,10 +18,12 @@ export default function Dashboard() {
     confirmed: 0
   });
 
+  // Carrega agendamentos ao iniciar a tela
   useEffect(() => {
     loadBookings();
   }, []);
 
+  // Busca agendamentos e calcula estatísticas
   async function loadBookings() {
     const { data, error } = await supabase
       .from("bookings")
@@ -55,6 +59,7 @@ export default function Dashboard() {
     });
   }
 
+  // Atualiza o status do agendamento
   async function updateBookingStatus(bookingId: string, status: "PENDING_PAYMENT" | "CONFIRMED" | "CANCELED" | "COMPLETED") {
     const { error } = await supabase
       .from("bookings")
@@ -70,6 +75,7 @@ export default function Dashboard() {
     loadBookings();
   }
 
+  // Retorna badge de status com estilo apropriado
   function getStatusBadge(status: string) {
     const variants: any = {
       PENDING_PAYMENT: "secondary",
