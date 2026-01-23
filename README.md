@@ -1,73 +1,74 @@
-# Welcome to your Lovable project
+# ✂️ Barber-On
 
-## Project info
+Sistema completo de gerenciamento para barbearias com agendamento online, pagamentos PIX e comunicação integrada.
 
-**URL**: https://lovable.dev/projects/26c360e5-63fd-42d5-9aa2-05460b5f6d68
+## 🚀 Funcionalidades
 
-## How can I edit this code?
+### Para Clientes
+- 📱 **PWA Instalável** - Funciona como app nativo no celular
+- 📅 **Agendamento Online** - Escolha serviço, data e horário disponível
+- 💳 **Pagamento PIX** - QR Code para pagamento antecipado ou presencial
+- 💬 **Chat Integrado** - Comunicação direta com o profissional
+- 🔔 **Notificações** - Lembretes de agendamentos
+- 📋 **Histórico** - Visualize e gerencie seus agendamentos
 
-There are several ways of editing your application.
+### Para Administradores
+- 📊 **Dashboard** - Visão geral do negócio
+- 📆 **Agenda Completa** - Gerencie todos os agendamentos
+- 💰 **Gestão Financeira** - Controle de receitas e pagamentos
+- ✂️ **Serviços** - CRUD completo com preços e duração
+- 👥 **Clientes** - Base de dados com histórico
+- ⚙️ **Configurações** - Horários, PIX, políticas de cancelamento
 
-**Use Lovable**
+## 🛠️ Tecnologias
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/26c360e5-63fd-42d5-9aa2-05460b5f6d68) and start prompting.
+- **Frontend:** React 18 + TypeScript
+- **Build:** Vite
+- **Estilização:** Tailwind CSS + shadcn/ui
+- **Backend:** Cloud Database com autenticação JWT
+- **Realtime:** WebSockets para chat em tempo real
+- **PWA:** Service Worker para instalação e cache
 
-Changes made via Lovable will be committed automatically to this repo.
+## 📦 Instalação Local
 
-**Use your preferred IDE**
+```bash
+# Clone o repositório
+git clone <seu-repositorio>
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Acesse a pasta
+cd barber-on
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Instale as dependências
+npm install
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🏗️ Build para Produção
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run build
+```
 
-**Use GitHub Codespaces**
+## 📱 PWA
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+O app é totalmente instalável em dispositivos móveis:
+1. Acesse o site pelo navegador
+2. Clique em "Adicionar à tela inicial"
+3. Use como um app nativo
 
-## What technologies are used for this project?
+## 🔐 Segurança
 
-This project is built with:
+- Autenticação JWT
+- Row Level Security (RLS) no banco de dados
+- Proteção de rotas administrativas
+- Criptografia de dados sensíveis
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📄 Licença
 
-## How can I deploy this project?
+Proprietário - Todos os direitos reservados.
 
-Simply open [Lovable](https://lovable.dev/projects/26c360e5-63fd-42d5-9aa2-05460b5f6d68) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Barber-On** - Seu estilo começa aqui! 💈
