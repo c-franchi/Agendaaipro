@@ -1,11 +1,11 @@
 // Sistema desenvolvido por Dev Nei
 // Service Worker para cache offline e notificações
-const CACHE_NAME = 'barber-on-v1';
+const CACHE_NAME = 'eric-zambonini-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/src/main.tsx',
-  '/src/index.css'
+  '/manifest.json',
+  '/favicon.png'
 ];
 
 // Instalação: armazena recursos essenciais
@@ -18,10 +18,12 @@ self.addEventListener('install', (event) => {
 
 // Estratégia de cache: responde do cache e busca na rede como fallback
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-  );
+  if (event.request.method !== 'GET') return;
+  event.respondWith(fetch(event.request).then((response) => {
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+    return response;
+  }).catch(() => caches.match(event.request)));
 });
 
 // Limpa caches antigos ao ativar
@@ -44,8 +46,8 @@ self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
   const options = {
     body: data.body || 'Você tem um novo agendamento',
-    icon: 'https://storage.googleapis.com/gpt-engineer-file-uploads/PHfEygLl96PVOoKNyvcTx1Nu69z1/uploads/1759934031239-barber.png',
-    badge: 'https://storage.googleapis.com/gpt-engineer-file-uploads/PHfEygLl96PVOoKNyvcTx1Nu69z1/uploads/1759934031239-barber.png',
+    icon: '/icon-192.png',
+    badge: '/favicon.png',
     vibrate: [200, 100, 200],
     data: data,
     actions: [
@@ -55,7 +57,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Barber-On', options)
+    self.registration.showNotification(data.title || 'Eric Zambonini', options)
   );
 });
 

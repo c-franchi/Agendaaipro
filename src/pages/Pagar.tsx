@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generatePixPayload, generatePixQRCode, PixPayload } from "@/utils/pix";
-import { validateToken } from "@/utils/token";
 import { Copy, Download, ArrowLeft, CheckCircle, Upload, CreditCard, Banknote } from "lucide-react";
 
 // Página de pagamento e envio de comprovante
@@ -38,21 +37,11 @@ export default function Pagar() {
   async function loadBooking() {
     if (!bookingId || !token) return;
 
-    const validation = validateToken(token);
-    if (!validation.valid) {
-      toast.error("Link expirado ou inválido");
-      setLoading(false);
-      return;
-    }
-
-    const { data: bookingData, error: bookingError } = await supabase
-      .from("bookings")
-      .select(`
-        *,
-        services (name, allow_in_person_payment)
-      `)
-      .eq("id", bookingId)
-      .single();
+    const { data, error: bookingError } = await supabase.rpc("get_booking_by_token", {
+      p_booking_id: bookingId,
+      p_access_token: token,
+    });
+    const bookingData = data?.[0];
 
     if (bookingError || !bookingData) {
       toast.error("Agendamento não encontrado");
@@ -60,14 +49,9 @@ export default function Pagar() {
       return;
     }
 
-    const { data: settingsData } = await supabase
-      .from("settings")
-      .select("*")
-      .single();
-
     setBooking(bookingData);
-    setService(bookingData.services);
-    setSettings(settingsData);
+    setService({ name: bookingData.service_name, allow_in_person_payment: bookingData.allow_in_person_payment });
+    setSettings(bookingData.pix_payload_data);
     setReceiptUrl(bookingData.receipt_url);
     
     // Se já tem método de pagamento definido, mostrar
@@ -99,13 +83,17 @@ export default function Pagar() {
 
   // Define método de pagamento e atualiza no banco
   async function selectPaymentMethod(method: "pix" | "presencial") {
+    if (!bookingId || !token) return;
+    const { data, error } = await supabase.rpc("set_booking_payment_method", {
+      p_booking_id: bookingId,
+      p_access_token: token,
+      p_method: method,
+    });
+    if (error || !data) {
+      toast.error("Não foi possível selecionar esta forma de pagamento");
+      return;
+    }
     setPaymentMethod(method);
-    
-    // Atualizar no banco
-    await supabase
-      .from("bookings")
-      .update({ payment_method: method })
-      .eq("id", bookingId);
 
     if (method === "pix") {
       await generatePixCode();
@@ -129,14 +117,21 @@ export default function Pagar() {
   // Envia comprovante para o storage e atualiza o agendamento
   async function handleUploadReceipt(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (!file || !bookingId) return;
+    if (!file || !bookingId || !token) return;
 
     setUploading(true);
     
     try {
-      const fileExt = file.name.split('.').pop();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Entre na sua conta para enviar o comprovante");
+        navigate("/cliente");
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) throw new Error("O arquivo deve ter no máximo 10 MB");
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || "jpg";
       const fileName = `${bookingId}-${Date.now()}.${fileExt}`;
-      const filePath = `receipts/${fileName}`;
+      const filePath = `${session.user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('payment-receipts')
@@ -144,20 +139,13 @@ export default function Pagar() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('payment-receipts')
-        .getPublicUrl(filePath);
+      const { data: updated, error: updateError } = await supabase.rpc("set_booking_receipt", {
+        p_booking_id: bookingId,
+        p_access_token: token,
+        p_receipt_path: filePath,
+      });
 
-      // Atualizar booking com URL do comprovante
-      const { error: updateError } = await supabase
-        .from("bookings")
-        .update({ 
-          receipt_url: filePath,
-          status: 'PENDING_PAYMENT' // Aguardando confirmação do admin
-        })
-        .eq("id", bookingId);
-
-      if (updateError) throw updateError;
+      if (updateError || !updated) throw updateError || new Error("Comprovante não vinculado");
 
       setReceiptUrl(filePath);
       toast.success("Comprovante enviado! Aguarde a confirmação do profissional.");
@@ -171,22 +159,18 @@ export default function Pagar() {
 
   // Confirma pagamento presencial e marca o agendamento
   async function confirmInPersonPayment() {
-    if (!bookingId) return;
-
-    const { error } = await supabase
-      .from("bookings")
-      .update({ 
-        payment_method: 'presencial',
-        status: 'CONFIRMED'
-      })
-      .eq("id", bookingId);
-
-    if (error) {
+    if (!bookingId || !token) return;
+    const { data, error } = await supabase.rpc("set_booking_payment_method", {
+      p_booking_id: bookingId,
+      p_access_token: token,
+      p_method: "presencial",
+    });
+    if (error || !data) {
       toast.error("Erro ao confirmar");
       return;
     }
 
-    toast.success("Agendamento confirmado! Pagamento será realizado presencialmente.");
+    toast.success("Solicitação enviada! O profissional fará a confirmação.");
     navigate("/cliente/agendamentos");
   }
 

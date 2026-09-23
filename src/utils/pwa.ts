@@ -32,8 +32,8 @@ export function showNotification(title: string, body: string) {
     navigator.serviceWorker.ready.then((registration) => {
       registration.showNotification(title, {
         body,
-        icon: 'https://storage.googleapis.com/gpt-engineer-file-uploads/PHfEygLl96PVOoKNyvcTx1Nu69z1/uploads/1759934031239-barber.png',
-        badge: 'https://storage.googleapis.com/gpt-engineer-file-uploads/PHfEygLl96PVOoKNyvcTx1Nu69z1/uploads/1759934031239-barber.png',
+        icon: '/icon-192.png',
+        badge: '/favicon.png',
       });
     });
   }

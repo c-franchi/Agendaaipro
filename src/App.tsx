@@ -21,6 +21,7 @@ import Configuracoes from "./pages/admin/Configuracoes";
 import Perfil from "./pages/admin/Perfil";
 import Usuarios from "./pages/admin/Usuarios";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Cliente global de cache e requisições assíncronas
 const queryClient = new QueryClient();
@@ -37,18 +38,18 @@ const App = () => (
           <Route path="/agendar" element={<Agendar />} />
           <Route path="/pagar" element={<Pagar />} />
           <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/agenda" element={<Agenda />} />
-          <Route path="/admin/chat" element={<Chat />} />
-          <Route path="/admin/servicos" element={<Servicos />} />
-          <Route path="/admin/financeiro" element={<Financeiro />} />
-          <Route path="/admin/configuracoes" element={<Configuracoes />} />
-          <Route path="/admin/perfil" element={<Perfil />} />
-          <Route path="/admin/usuarios" element={<Usuarios />} />
+          <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><Dashboard /></ProtectedRoute>} />
+          <Route path="/admin/agenda" element={<ProtectedRoute role="admin"><Agenda /></ProtectedRoute>} />
+          <Route path="/admin/chat" element={<ProtectedRoute role="admin"><Chat /></ProtectedRoute>} />
+          <Route path="/admin/servicos" element={<ProtectedRoute role="admin"><Servicos /></ProtectedRoute>} />
+          <Route path="/admin/financeiro" element={<ProtectedRoute role="admin"><Financeiro /></ProtectedRoute>} />
+          <Route path="/admin/configuracoes" element={<ProtectedRoute role="admin"><Configuracoes /></ProtectedRoute>} />
+          <Route path="/admin/perfil" element={<ProtectedRoute role="admin"><Perfil /></ProtectedRoute>} />
+          <Route path="/admin/usuarios" element={<ProtectedRoute role="admin"><Usuarios /></ProtectedRoute>} />
           <Route path="/cliente" element={<Cliente />} />
-          <Route path="/cliente/agendamentos" element={<ClienteAgendamentos />} />
-          <Route path="/cliente/perfil" element={<ClientePerfil />} />
-          <Route path="/cliente/chat" element={<ClienteChat />} />
+          <Route path="/cliente/agendamentos" element={<ProtectedRoute><ClienteAgendamentos /></ProtectedRoute>} />
+          <Route path="/cliente/perfil" element={<ProtectedRoute><ClientePerfil /></ProtectedRoute>} />
+          <Route path="/cliente/chat" element={<ProtectedRoute><ClienteChat /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

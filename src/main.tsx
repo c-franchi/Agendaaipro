@@ -2,11 +2,10 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { registerServiceWorker, requestNotificationPermission } from "./utils/pwa";
+import { registerServiceWorker } from "./utils/pwa";
 
-// Registrar Service Worker e solicitar permissão para notificações
+// Registra o aplicativo; a permissão de notificações é solicitada após uma ação do usuário.
 registerServiceWorker();
-requestNotificationPermission();
 
 // Montar a aplicação React no elemento root
 createRoot(document.getElementById("root")!).render(<App />);
