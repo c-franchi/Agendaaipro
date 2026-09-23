@@ -34,6 +34,7 @@ const Index = () => {
   const [barber, setBarber] = useState<BarberProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(fallbackPortfolio);
+  const [portfolioUrls, setPortfolioUrls] = useState<Record<string, string>>({});
   const [category, setCategory] = useState("Todos");
   const [selectedImage, setSelectedImage] = useState<PortfolioItem | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,7 +48,16 @@ const Index = () => {
       ]);
       if (profileResult.data) setBarber(profileResult.data as BarberProfile);
       setServices((servicesResult.data as Service[]) || []);
-      if (portfolioResult.data?.length) setPortfolio(portfolioResult.data as PortfolioItem[]);
+      if (portfolioResult.data?.length) {
+        const items = portfolioResult.data as PortfolioItem[];
+        setPortfolio(items);
+        const signedEntries = await Promise.all(items.map(async (item) => {
+          if (item.image_url.startsWith("/") || item.image_url.startsWith("http")) return [item.id, item.image_url] as const;
+          const { data: signed } = await supabase.storage.from("portfolio").createSignedUrl(item.image_url, 3600);
+          return [item.id, signed?.signedUrl || fallbackPortfolio[0].image_url] as const;
+        }));
+        setPortfolioUrls(Object.fromEntries(signedEntries));
+      }
     };
     loadData();
   }, []);
@@ -137,7 +147,7 @@ const Index = () => {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
             {filteredPortfolio.map((item) => <button key={item.id} type="button" onClick={() => setSelectedImage(item)} className="group relative aspect-[4/5] overflow-hidden rounded-md bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <img src={item.image_url} alt={item.alt_text} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img src={portfolioUrls[item.id] || item.image_url} alt={item.alt_text} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-4 pt-12 text-sm font-medium text-foreground">{item.title}</span>
             </button>)}
           </div>
@@ -181,7 +191,7 @@ const Index = () => {
 
     <Dialog open={Boolean(selectedImage)} onOpenChange={(open) => !open && setSelectedImage(null)}>
       <DialogContent className="max-w-4xl border-border bg-card p-2 sm:p-3">
-        {selectedImage && <img src={selectedImage.image_url} alt={selectedImage.alt_text} className="max-h-[82vh] w-full rounded object-contain" />}
+        {selectedImage && <img src={portfolioUrls[selectedImage.id] || selectedImage.image_url} alt={selectedImage.alt_text} className="max-h-[82vh] w-full rounded object-contain" />}
       </DialogContent>
     </Dialog>
   </div>;

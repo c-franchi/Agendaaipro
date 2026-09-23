@@ -39,6 +39,7 @@ interface Booking {
   customer_name: string;
   customer_whatsapp: string;
   status: string;
+  cancellation_requested_at: string | null;
   service_id: string;
   services?: {
     name: string;
@@ -366,6 +367,9 @@ export default function Agenda() {
                       <p className="text-xs text-muted-foreground mt-1">
                         {booking.customer_whatsapp}
                       </p>
+                      {booking.cancellation_requested_at && (
+                        <p className="mt-2 text-xs font-medium text-destructive">Cancelamento solicitado pelo cliente</p>
+                      )}
                       
                       {/* Ações do Admin */}
                       {booking.status !== "CANCELED" && booking.status !== "COMPLETED" && (

@@ -55,7 +55,7 @@ const App = () => (
           <Route path="/cliente/agendamentos" element={<ProtectedRoute><ClienteAgendamentos /></ProtectedRoute>} />
           <Route path="/cliente/perfil" element={<ProtectedRoute><ClientePerfil /></ProtectedRoute>} />
           <Route path="/cliente/chat" element={<ProtectedRoute><ClienteChat /></ProtectedRoute>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* Rotas específicas devem permanecer antes da página não encontrada. */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

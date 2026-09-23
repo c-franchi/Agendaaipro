@@ -24,6 +24,7 @@ interface Booking {
   booking_date: string;
   booking_time: string;
   status: string;
+  cancellation_requested_at: string | null;
   price: number;
   service_id: string;
   services: {
@@ -128,7 +129,7 @@ export default function ClienteAgendamentos() {
       const { error } = await supabase.rpc("request_booking_cancellation", { p_booking_id: booking.id });
       if (error) throw error;
 
-      toast.success("Solicitação de cancelamento enviada! O profissional irá confirmar.");
+      toast.success("Solicitação enviada. O profissional irá confirmar o cancelamento.");
       setCancelDialog({ open: false, booking: null });
       loadBookings();
     } catch (error: unknown) {
@@ -229,7 +230,7 @@ export default function ClienteAgendamentos() {
                             <h3 className="font-semibold text-lg text-foreground">
                               {booking.services?.name}
                             </h3>
-                            {getStatusBadge(booking.status)}
+                            {booking.cancellation_requested_at ? <Badge variant="outline">Cancelamento solicitado</Badge> : getStatusBadge(booking.status)}
                           </div>
                           
                           <div className="space-y-1 text-sm text-muted-foreground">
@@ -253,7 +254,7 @@ export default function ClienteAgendamentos() {
                           </div>
                         </div>
 
-                        {canModifyBooking(booking) && (
+                          {canModifyBooking(booking) && !booking.cancellation_requested_at && (
                           <div className="flex gap-2 flex-wrap">
                             <Button
                               variant="outline"
@@ -307,7 +308,7 @@ export default function ClienteAgendamentos() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja solicitar o cancelamento deste agendamento? O profissional será notificado e confirmará o cancelamento.
+              Deseja solicitar o cancelamento deste agendamento? A solicitação respeitará o prazo configurado e aguardará a confirmação do profissional.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
