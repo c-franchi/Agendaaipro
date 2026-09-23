@@ -97,7 +97,7 @@ const Index = () => {
 
     <main>
       <section id="inicio" className="relative flex min-h-[92svh] items-end overflow-hidden pt-16">
-        <img src={heroAsset.url} alt="Espaço de atendimento Eric Zambonini" className="absolute inset-0 h-full w-full object-cover" fetchPriority="high" />
+        <img src={heroAsset.url} alt="Espaço de atendimento Eric Zambonini" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-background/15" />
         <div className="container relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-28 md:pb-24">
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">Beleza masculina e feminina · Desde 2001</p>
