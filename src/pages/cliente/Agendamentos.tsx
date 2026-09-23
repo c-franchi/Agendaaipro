@@ -133,8 +133,7 @@ export default function ClienteAgendamentos() {
       setCancelDialog({ open: false, booking: null });
       loadBookings();
     } catch (error: unknown) {
-      console.error(error);
-      toast.error("Erro ao enviar solicitação");
+      toast.error(error instanceof Error ? error.message : "Erro ao enviar solicitação");
     }
   }
 

@@ -114,13 +114,7 @@ export default function Financeiro() {
 
   // Rejeita comprovante e retorna status pendente
   async function rejectPayment(id: string) {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ 
-        status: "PENDING_PAYMENT",
-        receipt_url: null 
-      })
-      .eq("id", id);
+    const { error } = await supabase.rpc("admin_reject_booking_receipt", { p_booking_id: id });
 
     if (error) {
       toast.error("Erro ao rejeitar pagamento");

@@ -136,25 +136,25 @@ export default function Configuracoes() {
     toast.success("Perfil atualizado!");
   }
 
-  // Persiste horários semanais de atendimento
+  // Persiste todos os horários em uma única operação segura.
   async function handleSaveSchedules() {
-    // Deletar todas as regras existentes
-    await supabase.from("availability_rules").delete().neq("weekday", -1);
-
-    // Inserir novas regras
-    const { error } = await supabase.from("availability_rules").insert(
-      schedules.map((s) => ({
+    const invalidSchedule = schedules.find((schedule) => schedule.is_active && schedule.open_time >= schedule.close_time);
+    if (invalidSchedule) {
+      toast.error(`${WEEKDAY_NAMES[invalidSchedule.weekday]} precisa terminar depois do horário de abertura`);
+      return;
+    }
+    const { error } = await supabase.rpc("save_availability_rules", {
+      p_rules: schedules.map((s) => ({
         weekday: s.weekday,
         is_active: s.is_active,
         open_time: s.open_time,
         close_time: s.close_time,
         slot_min: s.slot_min,
-      }))
-    );
+      })),
+    });
 
     if (error) {
       toast.error("Erro ao salvar horários");
-      console.error(error);
       return;
     }
 

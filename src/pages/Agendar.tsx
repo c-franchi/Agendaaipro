@@ -256,13 +256,15 @@ export default function Agendar() {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-2xl">
-        <button 
+        <Button
+          type="button"
+          variant="ghost"
           onClick={() => navigate(-1)} 
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+          className="mb-6 px-0 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar
-        </button>
+        </Button>
 
         <h1 className="text-4xl font-bold mb-8 text-foreground text-center">{rescheduleId ? "Reagendar Horário" : "Agendar Horário"}</h1>
 

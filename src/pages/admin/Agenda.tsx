@@ -157,8 +157,8 @@ export default function Agenda() {
       toast.success("Agendamento cancelado com sucesso!");
       setCancelDialog({ open: false, booking: null });
       fetchBookings();
-    } catch (error) {
-      toast.error("Erro ao cancelar agendamento");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erro ao cancelar agendamento");
     }
   }
 
@@ -171,8 +171,8 @@ export default function Agenda() {
 
       toast.success("Agendamento confirmado!");
       fetchBookings();
-    } catch (error) {
-      toast.error("Erro ao confirmar agendamento");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erro ao confirmar agendamento");
     }
   }
 
