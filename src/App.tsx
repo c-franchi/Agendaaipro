@@ -35,8 +35,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/agendar" element={<Agendar />} />
-          <Route path="/pagar" element={<Pagar />} />
+          <Route path="/agendar" element={<ProtectedRoute><Agendar /></ProtectedRoute>} />
+          <Route path="/pagar" element={<ProtectedRoute><Pagar /></ProtectedRoute>} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><Dashboard /></ProtectedRoute>} />
           <Route path="/admin/agenda" element={<ProtectedRoute role="admin"><Agenda /></ProtectedRoute>} />
