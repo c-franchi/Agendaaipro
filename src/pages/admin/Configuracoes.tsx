@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 interface Settings {
   pix_chave?: string;
@@ -29,8 +30,8 @@ interface BarberProfile {
   bio?: string;
   avatar_url?: string;
   years_experience?: number;
-  socials?: Record<string, string>;
-  gallery?: unknown[];
+  socials?: Json;
+  gallery?: Json;
 }
 
 interface WeekdaySchedule {

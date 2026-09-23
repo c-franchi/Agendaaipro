@@ -9,9 +9,15 @@ import { toast } from "sonner";
 import { scheduleNotification } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import type { Json } from "@/integrations/supabase/types";
 
 type TimeBlock = { start_min: number; duration_min: number; blocked: boolean };
-type Service = { id: string; name: string; description: string | null; duration_min: number; price: number; interleaved_blocks: TimeBlock[] | null; allow_in_person_payment: boolean | null };
+type Service = { id: string; name: string; description: string | null; duration_min: number; price: number; interleaved_blocks: Json; allow_in_person_payment: boolean | null };
+
+function isTimeBlock(value: Json): value is TimeBlock {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    && typeof value.start_min === "number" && typeof value.duration_min === "number";
+}
 
 // Fluxo de agendamento de serviços
 export default function Agendar() {
@@ -95,7 +101,7 @@ export default function Agendar() {
 
     // Função auxiliar para verificar conflito entre horários
     // Verifica se um horário conflita com agendamentos existentes
-    function hasConflict(newTime: string, newService: Pick<Service, "duration_min" | "interleaved_blocks">): boolean {
+    function hasConflict(newTime: string, newService: { duration_min: number; interleaved_blocks: Json }): boolean {
       if (!bookings) return false;
 
       const newTimeMin = timeToMinutes(newTime);
@@ -128,12 +134,12 @@ export default function Agendar() {
 
     // Obter blocos de tempo ocupados para um agendamento
     // Retorna blocos ocupados conforme duração/intercalação do serviço
-    function getOccupiedBlocks(startMin: number, service: Pick<Service, "duration_min" | "interleaved_blocks">): Array<{start: number, end: number}> {
+    function getOccupiedBlocks(startMin: number, service: { duration_min: number; interleaved_blocks: Json }): Array<{start: number, end: number}> {
       const blocks: Array<{start: number, end: number}> = [];
       
-      if (service?.interleaved_blocks) {
+      if (Array.isArray(service.interleaved_blocks)) {
         // Serviço com bloqueios intercalados
-        const interleavedBlocks = service.interleaved_blocks;
+        const interleavedBlocks = service.interleaved_blocks.filter(isTimeBlock);
         for (const block of interleavedBlocks) {
           if (block.blocked) {
             blocks.push({
@@ -279,7 +285,7 @@ export default function Agendar() {
                         <h3 className="font-bold text-foreground">{service.name}</h3>
                         <p className="text-sm text-muted-foreground">{service.duration_min} minutos</p>
                       </div>
-                      <p className="text-xl font-bold text-primary">R$ {parseFloat(service.price).toFixed(2)}</p>
+                      <p className="text-xl font-bold text-primary">R$ {Number(service.price).toFixed(2)}</p>
                     </div>
                   </Card>
                 ))}
@@ -338,7 +344,7 @@ export default function Agendar() {
                     <strong>Horário:</strong> {selectedTime}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Valor:</strong> R$ {parseFloat(selectedService?.price || 0).toFixed(2)}
+                    <strong>Valor:</strong> R$ {Number(selectedService?.price || 0).toFixed(2)}
                   </p>
                 </div>
               )}
@@ -366,7 +372,7 @@ export default function Agendar() {
                   <p><strong>Serviço:</strong> {selectedService?.name}</p>
                   <p><strong>Data:</strong> {selectedDate?.toLocaleDateString('pt-BR')}</p>
                   <p><strong>Horário:</strong> {selectedTime}</p>
-                  <p><strong>Valor:</strong> R$ {parseFloat(selectedService?.price || 0).toFixed(2)}</p>
+                  <p><strong>Valor:</strong> R$ {Number(selectedService?.price || 0).toFixed(2)}</p>
                   <p className="mt-4"><strong>Cliente:</strong> {userProfile?.full_name}</p>
                   <p><strong>WhatsApp:</strong> {userProfile?.phone}</p>
                 </div>
