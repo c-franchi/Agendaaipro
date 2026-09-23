@@ -6,13 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Award, CalendarDays, Clock3, Facebook, Instagram, Menu, Phone, Scissors, X } from "lucide-react";
-import heroAsset from "@/assets/hero_eric.webp.asset.json";
-import corte2 from "@/assets/corte2.webp.asset.json";
-import corte3 from "@/assets/corte3.webp.asset.json";
-import corte4 from "@/assets/corte4.webp.asset.json";
-import corte5 from "@/assets/corte5.png.asset.json";
-import corte6 from "@/assets/corte6.webp.asset.json";
-import corte7 from "@/assets/corte7.webp.asset.json";
 
 type BarberProfile = {
   name: string;
@@ -29,12 +22,12 @@ type Service = { id: string; name: string; description: string | null; duration_
 type PortfolioItem = { id: string; title: string; category: string; image_url: string; alt_text: string };
 
 const fallbackPortfolio: PortfolioItem[] = [
-  { id: "corte-2", title: "Corte masculino clássico", category: "Masculino", image_url: corte2.url, alt_text: "Corte masculino com topete e degradê lateral" },
-  { id: "corte-3", title: "Corte texturizado", category: "Masculino", image_url: corte3.url, alt_text: "Corte masculino texturizado com barba alinhada" },
-  { id: "corte-6", title: "Degradê moderno", category: "Masculino", image_url: corte6.url, alt_text: "Corte masculino moderno com degradê baixo" },
-  { id: "corte-7", title: "Corte social", category: "Masculino", image_url: corte7.url, alt_text: "Corte social masculino com acabamento lateral" },
-  { id: "corte-4", title: "Alisamento e finalização", category: "Feminino", image_url: corte4.url, alt_text: "Cabelo feminino longo, liso e finalizado" },
-  { id: "corte-5", title: "Design de sobrancelhas", category: "Feminino", image_url: corte5.url, alt_text: "Resultado de design de sobrancelhas feminino" },
+  { id: "corte-2", title: "Corte masculino clássico", category: "Masculino", image_url: "/images/corte2.webp", alt_text: "Corte masculino com topete e degradê lateral" },
+  { id: "corte-3", title: "Corte texturizado", category: "Masculino", image_url: "/images/corte3.webp", alt_text: "Corte masculino texturizado com barba alinhada" },
+  { id: "corte-6", title: "Degradê moderno", category: "Masculino", image_url: "/images/corte6.webp", alt_text: "Corte masculino moderno com degradê baixo" },
+  { id: "corte-7", title: "Corte social", category: "Masculino", image_url: "/images/corte7.webp", alt_text: "Corte social masculino com acabamento lateral" },
+  { id: "corte-4", title: "Alisamento e finalização", category: "Feminino", image_url: "/images/corte4.webp", alt_text: "Cabelo feminino longo, liso e finalizado" },
+  { id: "corte-5", title: "Design de sobrancelhas", category: "Feminino", image_url: "/images/corte5.png", alt_text: "Resultado de design de sobrancelhas feminino" },
 ];
 
 const Index = () => {
@@ -97,7 +90,7 @@ const Index = () => {
 
     <main>
       <section id="inicio" className="relative flex min-h-[92svh] items-end overflow-hidden pt-16">
-        <img src={heroAsset.url} alt="Espaço de atendimento Eric Zambonini" className="absolute inset-0 h-full w-full object-cover" />
+        <img src="/images/hero-eric.webp" alt="Espaço de atendimento Eric Zambonini" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-background/15" />
         <div className="container relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-28 md:pb-24">
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">Beleza masculina e feminina · Desde 2001</p>
