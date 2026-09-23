@@ -10,12 +10,15 @@ import { scheduleNotification } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+type TimeBlock = { start_min: number; duration_min: number; blocked: boolean };
+type Service = { id: string; name: string; description: string | null; duration_min: number; price: number; interleaved_blocks: TimeBlock[] | null; allow_in_person_payment: boolean | null };
+
 // Fluxo de agendamento de serviços
 export default function Agendar() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [services, setServices] = useState<any[]>([]);
-  const [selectedService, setSelectedService] = useState<any>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
@@ -92,7 +95,7 @@ export default function Agendar() {
 
     // Função auxiliar para verificar conflito entre horários
     // Verifica se um horário conflita com agendamentos existentes
-    function hasConflict(newTime: string, newService: any): boolean {
+    function hasConflict(newTime: string, newService: Pick<Service, "duration_min" | "interleaved_blocks">): boolean {
       if (!bookings) return false;
 
       const newTimeMin = timeToMinutes(newTime);
@@ -125,12 +128,12 @@ export default function Agendar() {
 
     // Obter blocos de tempo ocupados para um agendamento
     // Retorna blocos ocupados conforme duração/intercalação do serviço
-    function getOccupiedBlocks(startMin: number, service: any): Array<{start: number, end: number}> {
+    function getOccupiedBlocks(startMin: number, service: Pick<Service, "duration_min" | "interleaved_blocks">): Array<{start: number, end: number}> {
       const blocks: Array<{start: number, end: number}> = [];
       
       if (service?.interleaved_blocks) {
         // Serviço com bloqueios intercalados
-        const interleavedBlocks = service.interleaved_blocks as any[];
+        const interleavedBlocks = service.interleaved_blocks;
         for (const block of interleavedBlocks) {
           if (block.blocked) {
             blocks.push({

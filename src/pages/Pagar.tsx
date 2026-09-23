@@ -8,6 +8,10 @@ import { toast } from "sonner";
 import { generatePixPayload, generatePixQRCode, PixPayload } from "@/utils/pix";
 import { Copy, Download, ArrowLeft, CheckCircle, Upload, CreditCard, Banknote } from "lucide-react";
 
+type BookingPayment = { id: string; price: number; receipt_url: string | null; payment_method: string | null; booking_date: string; booking_time: string; status: string; customer_name: string };
+type PaymentService = { name: string; allow_in_person_payment: boolean };
+type PixSettings = { pix_chave?: string; pix_nome_recebedor?: string; pix_cidade?: string };
+
 // Página de pagamento e envio de comprovante
 export default function Pagar() {
   const [searchParams] = useSearchParams();
@@ -15,9 +19,9 @@ export default function Pagar() {
   const bookingId = searchParams.get("booking");
   const token = searchParams.get("token");
   
-  const [booking, setBooking] = useState<any>(null);
-  const [service, setService] = useState<any>(null);
-  const [settings, setSettings] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingPayment | null>(null);
+  const [service, setService] = useState<PaymentService | null>(null);
+  const [settings, setSettings] = useState<PixSettings | null>(null);
   const [pixCode, setPixCode] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [loading, setLoading] = useState(true);

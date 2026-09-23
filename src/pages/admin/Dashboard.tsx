@@ -8,9 +8,12 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { Calendar, Clock, DollarSign, Users } from "lucide-react";
 import { toast } from "sonner";
 
+type BookingStatus = "PENDING_PAYMENT" | "CONFIRMED" | "CANCELED" | "COMPLETED";
+type BookingRow = { id: string; booking_date: string; booking_time: string; customer_name: string; price: number; status: BookingStatus; services: { name: string } | null };
+
 // Dashboard administrativo com estatísticas e agendamentos recentes
 export default function Dashboard() {
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [stats, setStats] = useState({
     today: 0,
     week: 0,
@@ -77,21 +80,22 @@ export default function Dashboard() {
 
   // Retorna badge de status com estilo apropriado
   function getStatusBadge(status: string) {
-    const variants: any = {
+    const variants: Record<BookingStatus, "secondary" | "default" | "destructive" | "outline"> = {
       PENDING_PAYMENT: "secondary",
       CONFIRMED: "default",
       CANCELED: "destructive",
       COMPLETED: "outline"
     };
 
-    const labels: any = {
+    const labels: Record<BookingStatus, string> = {
       PENDING_PAYMENT: "Pendente",
       CONFIRMED: "Confirmado",
       CANCELED: "Cancelado",
       COMPLETED: "Concluído"
     };
 
-    return <Badge variant={variants[status]}>{labels[status]}</Badge>;
+    const safeStatus = status as BookingStatus;
+    return <Badge variant={variants[safeStatus]}>{labels[safeStatus]}</Badge>;
   }
 
   return (
