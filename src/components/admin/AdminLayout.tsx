@@ -3,7 +3,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Calendar, Scissors, DollarSign, Settings, LogOut, Menu, MessageCircle, User, Users } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, DollarSign, Settings, LogOut, Menu, MessageCircle, User, Users, Images } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -57,6 +57,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Calendar, label: "Agenda", path: "/admin/agenda" },
     { icon: MessageCircle, label: "Chat", path: "/admin/chat" },
     { icon: Scissors, label: "Serviços", path: "/admin/servicos" },
+    { icon: Images, label: "Portfólio", path: "/admin/portfolio" },
     { icon: DollarSign, label: "Financeiro", path: "/admin/financeiro" },
     { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
   ];

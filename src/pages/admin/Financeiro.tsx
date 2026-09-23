@@ -100,10 +100,7 @@ export default function Financeiro() {
 
   // Confirma pagamento após validação do comprovante
   async function confirmPayment(id: string) {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "CONFIRMED" })
-      .eq("id", id);
+    const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: id, p_status: "CONFIRMED" });
 
     if (error) {
       toast.error("Erro ao confirmar pagamento");

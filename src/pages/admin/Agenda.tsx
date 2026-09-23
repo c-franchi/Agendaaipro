@@ -149,10 +149,7 @@ export default function Agenda() {
     if (!cancelDialog.booking) return;
 
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "CANCELED" })
-        .eq("id", cancelDialog.booking.id);
+      const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: cancelDialog.booking.id, p_status: "CANCELED" });
 
       if (error) throw error;
 
@@ -167,10 +164,7 @@ export default function Agenda() {
   // Confirma um agendamento pendente
   async function handleConfirmBooking(bookingId: string) {
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "CONFIRMED" })
-        .eq("id", bookingId);
+      const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: bookingId, p_status: "CONFIRMED" });
 
       if (error) throw error;
 
