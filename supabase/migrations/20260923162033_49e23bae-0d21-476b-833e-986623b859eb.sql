@@ -49,7 +49,6 @@ grant select on public.booking_events to authenticated;
 grant all on public.booking_events to service_role;
 alter table public.booking_events enable row level security;
 
--- Replace legacy permissive policies with explicit role and ownership rules.
 drop policy if exists "Admin can update barber profile" on public.barber_profile;
 drop policy if exists "Admin can insert barber profile" on public.barber_profile;
 create policy "Admins can insert barber profile" on public.barber_profile for insert to authenticated
@@ -130,7 +129,6 @@ create policy "Admins can read booking events" on public.booking_events for sele
 create policy "Customers can read own booking events" on public.booking_events for select to authenticated
   using (exists (select 1 from public.bookings b where b.id = booking_id and b.user_id = auth.uid()));
 
--- Private receipts are separated by the authenticated user's id.
 drop policy if exists "Authenticated users can upload receipts" on storage.objects;
 drop policy if exists "Authenticated users can view receipts" on storage.objects;
 drop policy if exists "Admins can delete receipts" on storage.objects;
@@ -143,7 +141,6 @@ create policy "Admins read receipts" on storage.objects for select to authentica
 create policy "Admins delete receipts" on storage.objects for delete to authenticated
   using (bucket_id = 'payment-receipts' and public.has_role(auth.uid(), 'admin'));
 
--- Portfolio media is public only after an admin uploads it.
 create policy "Public reads portfolio media" on storage.objects for select to anon, authenticated
   using (bucket_id = 'portfolio');
 create policy "Admins upload portfolio media" on storage.objects for insert to authenticated
@@ -154,7 +151,6 @@ create policy "Admins update portfolio media" on storage.objects for update to a
 create policy "Admins delete portfolio media" on storage.objects for delete to authenticated
   using (bucket_id = 'portfolio' and public.has_role(auth.uid(), 'admin'));
 
--- A safe public projection avoids exposing payment and integration settings.
 create or replace function public.get_public_booking_settings()
 returns table(min_advance_hours integer, max_days_ahead integer, cancel_policy_hours integer, require_payment_on_booking boolean)
 language sql stable security definer set search_path = public
@@ -222,7 +218,7 @@ begin
   end loop;
 
   insert into public.bookings(service_id, user_id, customer_name, customer_whatsapp, booking_date, booking_time, price, status, access_token_hash, access_token_expires_at)
-  values(v_service.id, auth.uid(), trim(p_customer_name), p_customer_whatsapp, p_booking_date, p_booking_time, v_service.price, 'PENDING_PAYMENT', encode(extensions.digest(v_token,'sha256'),'hex'), now()+interval '48 hours') returning * into v_booking;
+  values(v_service.id, auth.uid(), trim(p_customer_name), p_customer_whatsapp, p_booking_date, p_booking_time, v_service.price, 'PENDING_PAYMENT', encode(digest(v_token,'sha256'),'hex'), now()+interval '48 hours') returning * into v_booking;
   insert into public.booking_events(booking_id, actor_id, event_type, new_status) values(v_booking.id, auth.uid(), 'CREATED', v_booking.status);
   return jsonb_build_object('booking_id',v_booking.id,'access_token',v_token,'requires_payment',coalesce(v_settings.require_payment_on_booking,true));
 end
@@ -254,7 +250,6 @@ end $$;
 revoke all on function public.set_booking_payment_method(uuid,text,text) from public;
 grant execute on function public.set_booking_payment_method(uuid,text,text) to anon,authenticated;
 
--- Trigger helpers are not API endpoints.
 revoke all on function public.handle_new_user() from public, anon, authenticated;
 revoke all on function public.update_conversation_last_message() from public, anon, authenticated;
 revoke all on function public.update_updated_at_column() from public, anon, authenticated;

@@ -46,34 +46,49 @@ export type Database = {
       }
       barber_profile: {
         Row: {
+          address_text: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          facebook_url: string | null
           gallery: Json | null
           id: string
+          instagram_url: string | null
           name: string
+          public_whatsapp: string | null
+          review_url: string | null
           socials: Json | null
           updated_at: string | null
           years_experience: number | null
         }
         Insert: {
+          address_text?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          facebook_url?: string | null
           gallery?: Json | null
           id?: string
+          instagram_url?: string | null
           name: string
+          public_whatsapp?: string | null
+          review_url?: string | null
           socials?: Json | null
           updated_at?: string | null
           years_experience?: number | null
         }
         Update: {
+          address_text?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          facebook_url?: string | null
           gallery?: Json | null
           id?: string
+          instagram_url?: string | null
           name?: string
+          public_whatsapp?: string | null
+          review_url?: string | null
           socials?: Json | null
           updated_at?: string | null
           years_experience?: number | null
@@ -103,6 +118,47 @@ export type Database = {
           start_datetime?: string
         }
         Relationships: []
+      }
+      booking_events: {
+        Row: {
+          actor_id: string | null
+          booking_id: string
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          new_status: Database["public"]["Enums"]["booking_status"] | null
+          previous_status: Database["public"]["Enums"]["booking_status"] | null
+        }
+        Insert: {
+          actor_id?: string | null
+          booking_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          new_status?: Database["public"]["Enums"]["booking_status"] | null
+          previous_status?: Database["public"]["Enums"]["booking_status"] | null
+        }
+        Update: {
+          actor_id?: string | null
+          booking_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          new_status?: Database["public"]["Enums"]["booking_status"] | null
+          previous_status?: Database["public"]["Enums"]["booking_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       booking_notifications: {
         Row: {
@@ -141,8 +197,11 @@ export type Database = {
       }
       bookings: {
         Row: {
+          access_token_expires_at: string | null
+          access_token_hash: string | null
           booking_date: string
           booking_time: string
+          cancellation_requested_at: string | null
           created_at: string | null
           customer_name: string
           customer_whatsapp: string
@@ -150,14 +209,19 @@ export type Database = {
           payment_method: string | null
           price: number
           receipt_url: string | null
+          rescheduled_from: string | null
           service_id: string | null
           status: Database["public"]["Enums"]["booking_status"] | null
           token: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
+          access_token_expires_at?: string | null
+          access_token_hash?: string | null
           booking_date: string
           booking_time: string
+          cancellation_requested_at?: string | null
           created_at?: string | null
           customer_name: string
           customer_whatsapp: string
@@ -165,14 +229,19 @@ export type Database = {
           payment_method?: string | null
           price: number
           receipt_url?: string | null
+          rescheduled_from?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           token?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
+          access_token_expires_at?: string | null
+          access_token_hash?: string | null
           booking_date?: string
           booking_time?: string
+          cancellation_requested_at?: string | null
           created_at?: string | null
           customer_name?: string
           customer_whatsapp?: string
@@ -180,12 +249,21 @@ export type Database = {
           payment_method?: string | null
           price?: number
           receipt_url?: string | null
+          rescheduled_from?: string | null
           service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"] | null
           token?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_rescheduled_from_fkey"
+            columns: ["rescheduled_from"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_service_id_fkey"
             columns: ["service_id"]
@@ -271,6 +349,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portfolio_items: {
+        Row: {
+          alt_text: string
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          alt_text: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -444,11 +561,51 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_booking: {
+        Args: {
+          p_booking_date: string
+          p_booking_time: string
+          p_customer_name: string
+          p_customer_whatsapp: string
+          p_service_id: string
+        }
+        Returns: Json
+      }
+      get_booking_by_token: {
+        Args: { p_access_token: string; p_booking_id: string }
+        Returns: {
+          allow_in_person_payment: boolean
+          booking_date: string
+          booking_time: string
+          customer_name: string
+          id: string
+          payment_method: string
+          pix_payload_data: Json
+          price: number
+          receipt_url: string
+          service_id: string
+          service_name: string
+          status: Database["public"]["Enums"]["booking_status"]
+        }[]
+      }
+      get_public_booking_settings: {
+        Args: never
+        Returns: {
+          cancel_policy_hours: number
+          max_days_ahead: number
+          min_advance_hours: number
+          require_payment_on_booking: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      set_booking_payment_method: {
+        Args: { p_access_token: string; p_booking_id: string; p_method: string }
         Returns: boolean
       }
     }
