@@ -1,6 +1,6 @@
 // Sistema desenvolvido por Dev Nei
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,6 +22,9 @@ function isTimeBlock(value: Json): value is TimeBlock {
 // Fluxo de agendamento de serviços
 export default function Agendar() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const rescheduleId = searchParams.get("reschedule");
+  const requestedServiceId = searchParams.get("service");
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -66,6 +69,10 @@ export default function Agendar() {
       .select("*")
       .eq("is_active", true);
     setServices(data || []);
+    if (requestedServiceId) {
+      const requested = (data || []).find((service) => service.id === requestedServiceId);
+      if (requested) { setSelectedService(requested); setStep(2); }
+    }
   }
 
   // Calcula horários disponíveis com base nas regras e agendamentos
@@ -214,6 +221,14 @@ export default function Agendar() {
       if (!selectedDate || !selectedService || !userProfile) throw new Error("Dados incompletos");
       const dateStr = formatLocalDate(selectedDate);
 
+      if (rescheduleId) {
+        const { error } = await supabase.rpc("reschedule_booking", { p_booking_id: rescheduleId, p_booking_date: dateStr, p_booking_time: selectedTime });
+        if (error) throw error;
+        toast.success("Agendamento reagendado com sucesso");
+        navigate("/cliente/agendamentos");
+        return;
+      }
+
       const phone = userProfile.phone.replace(/\D/g, "");
       const { data, error } = await supabase.rpc("create_booking", {
         p_service_id: selectedService.id,
@@ -241,15 +256,17 @@ export default function Agendar() {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-2xl">
-        <button 
+        <Button
+          type="button"
+          variant="ghost"
           onClick={() => navigate(-1)} 
-          className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
+          className="mb-6 px-0 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-4 h-4" />
           Voltar
-        </button>
+        </Button>
 
-        <h1 className="text-4xl font-bold mb-8 text-foreground text-center">Agendar Horário</h1>
+        <h1 className="text-4xl font-bold mb-8 text-foreground text-center">{rescheduleId ? "Reagendar Horário" : "Agendar Horário"}</h1>
 
         <div className="flex justify-center gap-2 mb-8">
           {[1, 2, 3].map((s) => (
@@ -355,7 +372,7 @@ export default function Agendar() {
                 </Button>
                 {selectedTime && (
                   <Button onClick={handleConfirmBooking} className="flex-1">
-                    Confirmar Agendamento
+                    {rescheduleId ? "Confirmar novo horário" : "Confirmar Agendamento"}
                   </Button>
                 )}
               </div>
@@ -366,7 +383,7 @@ export default function Agendar() {
         <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar Agendamento</AlertDialogTitle>
+              <AlertDialogTitle>{rescheduleId ? "Confirmar novo horário" : "Confirmar Agendamento"}</AlertDialogTitle>
               <AlertDialogDescription>
                 <div className="space-y-2 mt-4">
                   <p><strong>Serviço:</strong> {selectedService?.name}</p>

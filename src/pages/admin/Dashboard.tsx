@@ -64,10 +64,7 @@ export default function Dashboard() {
 
   // Atualiza o status do agendamento
   async function updateBookingStatus(bookingId: string, status: "PENDING_PAYMENT" | "CONFIRMED" | "CANCELED" | "COMPLETED") {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status })
-      .eq("id", bookingId);
+    const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: bookingId, p_status: status });
 
     if (error) {
       toast.error("Erro ao atualizar status");

@@ -100,10 +100,7 @@ export default function Financeiro() {
 
   // Confirma pagamento após validação do comprovante
   async function confirmPayment(id: string) {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ status: "CONFIRMED" })
-      .eq("id", id);
+    const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: id, p_status: "CONFIRMED" });
 
     if (error) {
       toast.error("Erro ao confirmar pagamento");
@@ -117,13 +114,7 @@ export default function Financeiro() {
 
   // Rejeita comprovante e retorna status pendente
   async function rejectPayment(id: string) {
-    const { error } = await supabase
-      .from("bookings")
-      .update({ 
-        status: "PENDING_PAYMENT",
-        receipt_url: null 
-      })
-      .eq("id", id);
+    const { error } = await supabase.rpc("admin_reject_booking_receipt", { p_booking_id: id });
 
     if (error) {
       toast.error("Erro ao rejeitar pagamento");

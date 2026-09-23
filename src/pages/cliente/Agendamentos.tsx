@@ -17,7 +17,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { notifyCancellationRequest } from "@/utils/pwa";
 import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface Booking {
@@ -25,6 +24,7 @@ interface Booking {
   booking_date: string;
   booking_time: string;
   status: string;
+  cancellation_requested_at: string | null;
   price: number;
   service_id: string;
   services: {
@@ -114,94 +114,26 @@ export default function ClienteAgendamentos() {
     setRescheduleBooking(booking);
   }
 
-  // Cancela o agendamento e redireciona para novo horário
+  // Abre o fluxo seguro de reagendamento sem cancelar o horário atual.
   async function confirmReschedule() {
     if (!rescheduleBooking) return;
-
-    // Cancela o agendamento atual e redireciona para novo agendamento
-    try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "CANCELED" })
-        .eq("id", rescheduleBooking.id);
-
-      if (error) throw error;
-
-      toast.success("Agendamento anterior cancelado. Selecione um novo horário.");
-      navigate(`/agendar?service=${rescheduleBooking.service_id}`);
-    } catch (error) {
-      toast.error("Erro ao reagendar");
-    }
+    navigate(`/agendar?service=${rescheduleBooking.service_id}&reschedule=${rescheduleBooking.id}`);
   }
 
-  // Solicita cancelamento via chat com o admin
+  // Registra a solicitação de cancelamento no servidor.
   async function handleCancelBooking() {
     if (!cancelDialog.booking || !user) return;
 
     try {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name, phone")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile) {
-        toast.error("Perfil não encontrado");
-        return;
-      }
-
-      // Buscar ou criar conversa
-      let { data: conversation } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!conversation) {
-        const { data: newConv, error: convError } = await supabase
-          .from("conversations")
-          .insert({
-            user_id: user.id,
-            customer_name: profile.full_name || "Cliente",
-            customer_whatsapp: profile.phone || "",
-          })
-          .select()
-          .single();
-
-        if (convError) throw convError;
-        conversation = newConv;
-      }
-
       const booking = cancelDialog.booking;
-      const serviceName = booking.services?.name || "Serviço";
-      const bookingDate = new Date(booking.booking_date).toLocaleDateString("pt-BR");
-      const bookingTime = booking.booking_time;
+      const { error } = await supabase.rpc("request_booking_cancellation", { p_booking_id: booking.id });
+      if (error) throw error;
 
-      const message = `❌ Solicitação de CANCELAMENTO\n\nServiço: ${serviceName}\nData: ${bookingDate}\nHorário: ${bookingTime}\n\nPor favor, confirme o cancelamento deste agendamento.`;
-
-      // Enviar mensagem
-      const { error: msgError } = await supabase.from("messages").insert({
-        conversation_id: conversation.id,
-        content: message,
-        sender_type: "customer",
-      });
-
-      if (msgError) throw msgError;
-
-      // Notificação push para o admin
-      notifyCancellationRequest(
-        profile.full_name || "Cliente",
-        serviceName,
-        booking.booking_date,
-        bookingTime
-      );
-
-      toast.success("Solicitação de cancelamento enviada! O profissional irá confirmar.");
+      toast.success("Solicitação enviada. O profissional irá confirmar o cancelamento.");
       setCancelDialog({ open: false, booking: null });
       loadBookings();
     } catch (error: unknown) {
-      console.error(error);
-      toast.error("Erro ao enviar solicitação");
+      toast.error(error instanceof Error ? error.message : "Erro ao enviar solicitação");
     }
   }
 
@@ -297,7 +229,7 @@ export default function ClienteAgendamentos() {
                             <h3 className="font-semibold text-lg text-foreground">
                               {booking.services?.name}
                             </h3>
-                            {getStatusBadge(booking.status)}
+                            {booking.cancellation_requested_at ? <Badge variant="outline">Cancelamento solicitado</Badge> : getStatusBadge(booking.status)}
                           </div>
                           
                           <div className="space-y-1 text-sm text-muted-foreground">
@@ -321,7 +253,7 @@ export default function ClienteAgendamentos() {
                           </div>
                         </div>
 
-                        {canModifyBooking(booking) && (
+                          {canModifyBooking(booking) && !booking.cancellation_requested_at && (
                           <div className="flex gap-2 flex-wrap">
                             <Button
                               variant="outline"
@@ -357,7 +289,7 @@ export default function ClienteAgendamentos() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reagendar Agendamento</AlertDialogTitle>
             <AlertDialogDescription>
-              O agendamento atual será cancelado e você poderá escolher um novo horário para o serviço "{rescheduleBooking?.services?.name}".
+              Escolha um novo horário para “{rescheduleBooking?.services?.name}”. O horário atual será mantido até a troca ser concluída.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -375,7 +307,7 @@ export default function ClienteAgendamentos() {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
             <AlertDialogDescription>
-              Deseja solicitar o cancelamento deste agendamento? O profissional será notificado e confirmará o cancelamento.
+              Deseja solicitar o cancelamento deste agendamento? A solicitação respeitará o prazo configurado e aguardará a confirmação do profissional.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

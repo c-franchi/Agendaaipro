@@ -34,6 +34,7 @@ const Index = () => {
   const [barber, setBarber] = useState<BarberProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(fallbackPortfolio);
+  const [portfolioUrls, setPortfolioUrls] = useState<Record<string, string>>({});
   const [category, setCategory] = useState("Todos");
   const [selectedImage, setSelectedImage] = useState<PortfolioItem | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -47,7 +48,16 @@ const Index = () => {
       ]);
       if (profileResult.data) setBarber(profileResult.data as BarberProfile);
       setServices((servicesResult.data as Service[]) || []);
-      if (portfolioResult.data?.length) setPortfolio(portfolioResult.data as PortfolioItem[]);
+      if (portfolioResult.data?.length) {
+        const items = portfolioResult.data as PortfolioItem[];
+        setPortfolio(items);
+        const signedEntries = await Promise.all(items.map(async (item) => {
+          if (item.image_url.startsWith("/") || item.image_url.startsWith("http")) return [item.id, item.image_url] as const;
+          const { data: signed } = await supabase.storage.from("portfolio").createSignedUrl(item.image_url, 3600);
+          return [item.id, signed?.signedUrl || fallbackPortfolio[0].image_url] as const;
+        }));
+        setPortfolioUrls(Object.fromEntries(signedEntries));
+      }
     };
     loadData();
   }, []);
@@ -58,7 +68,7 @@ const Index = () => {
   );
   const categories = ["Todos", ...Array.from(new Set(portfolio.map((item) => item.category)))];
   const name = barber?.name || "Eric Zambonini";
-  const experience = barber?.years_experience || new Date().getFullYear() - 2001;
+  const experience = Math.max(barber?.years_experience || 0, 25);
   const instagram = barber?.instagram_url || "https://www.instagram.com/zamboninieric?stkn=ZTJ0ZmJ2bGRnYmNx";
   const facebook = barber?.facebook_url || "https://www.facebook.com/eric.zambonini.2025";
   const reviews = barber?.review_url || "https://g.page/r/CWECIhz8246XECE/review";
@@ -93,10 +103,10 @@ const Index = () => {
         <img src="/images/hero-eric.webp" alt="Espaço de atendimento Eric Zambonini" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-background/15" />
         <div className="container relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-28 md:pb-24">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">Beleza masculina e feminina · Desde 2001</p>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">Beleza masculina e feminina · Mais de 25 anos de experiência</p>
           <h1 className="max-w-4xl text-5xl font-bold leading-tight text-foreground md:text-7xl">{name}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-foreground/85 md:text-xl">
-            Atendimento masculino e feminino com experiência, técnica e cuidado desde 2001.
+            Atendimento masculino e feminino com mais de 25 anos de experiência, técnica e cuidado.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 px-7"><Link to="/agendar"><CalendarDays className="mr-2 h-5 w-5" />Agendar horário</Link></Button>
@@ -137,7 +147,7 @@ const Index = () => {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
             {filteredPortfolio.map((item) => <button key={item.id} type="button" onClick={() => setSelectedImage(item)} className="group relative aspect-[4/5] overflow-hidden rounded-md bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <img src={item.image_url} alt={item.alt_text} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img src={portfolioUrls[item.id] || item.image_url} alt={item.alt_text} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-4 pt-12 text-sm font-medium text-foreground">{item.title}</span>
             </button>)}
           </div>
@@ -149,12 +159,12 @@ const Index = () => {
           <div className="border-l-2 border-primary pl-6">
             <Award className="mb-5 h-9 w-9 text-primary" />
             <p className="text-5xl font-bold text-foreground">{experience}+</p>
-            <p className="mt-2 text-muted-foreground">anos de experiência desde 2001</p>
+            <p className="mt-2 text-muted-foreground">anos de experiência profissional</p>
           </div>
           <div>
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">Sobre o profissional</p>
             <h2 className="text-3xl font-bold md:text-5xl">Experiência que acompanha o seu estilo</h2>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">Eric Zambonini atua desde 2001 com serviços masculinos e femininos, unindo técnica, atenção aos detalhes e uma experiência acolhedora.</p>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">Eric Zambonini reúne mais de 25 anos de atuação em serviços masculinos e femininos, unindo técnica, atenção aos detalhes e uma experiência acolhedora.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild variant="outline"><a href={reviews} target="_blank" rel="noreferrer">Avaliar no Google</a></Button>
               <Button asChild><Link to="/agendar">Agendar atendimento</Link></Button>
@@ -166,7 +176,7 @@ const Index = () => {
 
     <footer className="border-t border-border bg-card py-12">
       <div className="container mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-3">
-        <div><p className="text-lg font-semibold">{name}</p><p className="mt-2 text-sm text-muted-foreground">Beleza masculina e feminina desde 2001.</p></div>
+        <div><p className="text-lg font-semibold">{name}</p><p className="mt-2 text-sm text-muted-foreground">Beleza masculina e feminina há mais de 25 anos.</p></div>
         <div>{barber?.address_text && <><p className="font-medium">Localização</p><p className="mt-2 text-sm text-muted-foreground">{barber.address_text}</p></>}</div>
         <div className="md:text-right"><p className="mb-3 font-medium">Acompanhe</p><div className="flex gap-2 md:justify-end">
           <Button asChild variant="outline" size="icon"><a href={instagram} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram /></a></Button>
@@ -175,13 +185,13 @@ const Index = () => {
         </div></div>
       </div>
       <div className="container mx-auto mt-10 flex max-w-7xl flex-col gap-3 border-t border-border px-4 pt-6 text-xs text-muted-foreground sm:flex-row sm:justify-between">
-        <span>© 2025 {name}. Todos os direitos reservados.</span><Link to="/admin" className="hover:text-foreground">Acesso administrativo</Link>
+        <span>© 2026 {name}. Todos os direitos reservados.</span><div className="flex flex-wrap gap-4"><Link to="/privacidade" className="hover:text-foreground">Privacidade</Link><Link to="/termos" className="hover:text-foreground">Termos</Link><Link to="/admin" className="hover:text-foreground">Acesso administrativo</Link></div>
       </div>
     </footer>
 
     <Dialog open={Boolean(selectedImage)} onOpenChange={(open) => !open && setSelectedImage(null)}>
       <DialogContent className="max-w-4xl border-border bg-card p-2 sm:p-3">
-        {selectedImage && <img src={selectedImage.image_url} alt={selectedImage.alt_text} className="max-h-[82vh] w-full rounded object-contain" />}
+        {selectedImage && <img src={portfolioUrls[selectedImage.id] || selectedImage.image_url} alt={selectedImage.alt_text} className="max-h-[82vh] w-full rounded object-contain" />}
       </DialogContent>
     </Dialog>
   </div>;

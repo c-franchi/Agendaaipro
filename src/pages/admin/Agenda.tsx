@@ -39,6 +39,7 @@ interface Booking {
   customer_name: string;
   customer_whatsapp: string;
   status: string;
+  cancellation_requested_at: string | null;
   service_id: string;
   services?: {
     name: string;
@@ -149,35 +150,29 @@ export default function Agenda() {
     if (!cancelDialog.booking) return;
 
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "CANCELED" })
-        .eq("id", cancelDialog.booking.id);
+      const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: cancelDialog.booking.id, p_status: "CANCELED" });
 
       if (error) throw error;
 
       toast.success("Agendamento cancelado com sucesso!");
       setCancelDialog({ open: false, booking: null });
       fetchBookings();
-    } catch (error) {
-      toast.error("Erro ao cancelar agendamento");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erro ao cancelar agendamento");
     }
   }
 
   // Confirma um agendamento pendente
   async function handleConfirmBooking(bookingId: string) {
     try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ status: "CONFIRMED" })
-        .eq("id", bookingId);
+      const { error } = await supabase.rpc("admin_update_booking_status", { p_booking_id: bookingId, p_status: "CONFIRMED" });
 
       if (error) throw error;
 
       toast.success("Agendamento confirmado!");
       fetchBookings();
-    } catch (error) {
-      toast.error("Erro ao confirmar agendamento");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erro ao confirmar agendamento");
     }
   }
 
@@ -372,6 +367,9 @@ export default function Agenda() {
                       <p className="text-xs text-muted-foreground mt-1">
                         {booking.customer_whatsapp}
                       </p>
+                      {booking.cancellation_requested_at && (
+                        <p className="mt-2 text-xs font-medium text-destructive">Cancelamento solicitado pelo cliente</p>
+                      )}
                       
                       {/* Ações do Admin */}
                       {booking.status !== "CANCELED" && booking.status !== "COMPLETED" && (

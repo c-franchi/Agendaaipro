@@ -561,6 +561,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reject_booking_receipt: {
+        Args: { p_booking_id: string }
+        Returns: boolean
+      }
+      admin_update_booking_status: {
+        Args: {
+          p_booking_id: string
+          p_status: Database["public"]["Enums"]["booking_status"]
+        }
+        Returns: boolean
+      }
       create_booking: {
         Args: {
           p_booking_date: string
@@ -612,6 +623,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      request_booking_cancellation: {
+        Args: { p_booking_id: string }
+        Returns: boolean
+      }
+      reschedule_booking: {
+        Args: {
+          p_booking_date: string
+          p_booking_id: string
+          p_booking_time: string
+        }
+        Returns: Json
+      }
+      save_availability_rules: { Args: { p_rules: Json }; Returns: boolean }
       set_booking_payment_method: {
         Args: { p_access_token: string; p_booking_id: string; p_method: string }
         Returns: boolean
