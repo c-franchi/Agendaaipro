@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogOut, ArrowLeft, Save, Calendar, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 // Perfil do cliente com atualização de dados e senha
 export default function ClientePerfil() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
