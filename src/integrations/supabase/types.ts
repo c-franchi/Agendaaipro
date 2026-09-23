@@ -561,6 +561,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_reject_booking_receipt: {
+        Args: { p_booking_id: string }
+        Returns: boolean
+      }
       admin_update_booking_status: {
         Args: {
           p_booking_id: string
@@ -631,6 +635,7 @@ export type Database = {
         }
         Returns: Json
       }
+      save_availability_rules: { Args: { p_rules: Json }; Returns: boolean }
       set_booking_payment_method: {
         Args: { p_access_token: string; p_booking_id: string; p_method: string }
         Returns: boolean
