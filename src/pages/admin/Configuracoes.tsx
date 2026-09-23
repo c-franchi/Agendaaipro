@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 interface Settings {
   pix_chave?: string;
@@ -29,8 +30,8 @@ interface BarberProfile {
   bio?: string;
   avatar_url?: string;
   years_experience?: number;
-  socials?: any;
-  gallery?: any;
+  socials?: Json;
+  gallery?: Json;
 }
 
 interface WeekdaySchedule {
@@ -161,7 +162,7 @@ export default function Configuracoes() {
   }
 
   // Atualiza o estado de um dia da semana
-  function updateSchedule(weekday: number, field: keyof WeekdaySchedule, value: any) {
+  function updateSchedule<K extends keyof WeekdaySchedule>(weekday: number, field: K, value: WeekdaySchedule[K]) {
     setSchedules((prev) =>
       prev.map((s) => (s.weekday === weekday ? { ...s, [field]: value } : s))
     );

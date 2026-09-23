@@ -116,7 +116,7 @@ export default function ClienteChat() {
 
       setNewMessage("");
       toast.success("Mensagem enviada!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error("Erro ao enviar mensagem");
     } finally {
@@ -172,7 +172,7 @@ export default function ClienteChat() {
 
       setConversation(newConv);
       toast.success("Conversa iniciada!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error("Erro ao iniciar conversa");
     }

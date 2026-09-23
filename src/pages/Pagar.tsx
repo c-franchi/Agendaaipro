@@ -7,6 +7,20 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { generatePixPayload, generatePixQRCode, PixPayload } from "@/utils/pix";
 import { Copy, Download, ArrowLeft, CheckCircle, Upload, CreditCard, Banknote } from "lucide-react";
+import type { Json } from "@/integrations/supabase/types";
+
+type BookingPayment = { id: string; price: number; receipt_url: string | null; payment_method: string | null; booking_date: string; booking_time: string; status: string; customer_name: string };
+type PaymentService = { name: string; allow_in_person_payment: boolean };
+type PixSettings = { pix_chave?: string; pix_nome_recebedor?: string; pix_cidade?: string };
+
+function parsePixSettings(value: Json): PixSettings {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return {};
+  return {
+    pix_chave: typeof value.pix_chave === "string" ? value.pix_chave : undefined,
+    pix_nome_recebedor: typeof value.pix_nome_recebedor === "string" ? value.pix_nome_recebedor : undefined,
+    pix_cidade: typeof value.pix_cidade === "string" ? value.pix_cidade : undefined,
+  };
+}
 
 // Página de pagamento e envio de comprovante
 export default function Pagar() {
@@ -15,9 +29,9 @@ export default function Pagar() {
   const bookingId = searchParams.get("booking");
   const token = searchParams.get("token");
   
-  const [booking, setBooking] = useState<any>(null);
-  const [service, setService] = useState<any>(null);
-  const [settings, setSettings] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingPayment | null>(null);
+  const [service, setService] = useState<PaymentService | null>(null);
+  const [settings, setSettings] = useState<PixSettings | null>(null);
   const [pixCode, setPixCode] = useState("");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [loading, setLoading] = useState(true);
@@ -51,7 +65,7 @@ export default function Pagar() {
 
     setBooking(bookingData);
     setService({ name: bookingData.service_name, allow_in_person_payment: bookingData.allow_in_person_payment });
-    setSettings(bookingData.pix_payload_data);
+    setSettings(parsePixSettings(bookingData.pix_payload_data));
     setReceiptUrl(bookingData.receipt_url);
     
     // Se já tem método de pagamento definido, mostrar
@@ -219,7 +233,7 @@ export default function Pagar() {
             <p><strong className="text-foreground">Horário:</strong> {booking.booking_time}</p>
             <p><strong className="text-foreground">Cliente:</strong> {booking.customer_name}</p>
             <p className="text-2xl font-bold text-primary pt-2">
-              R$ {parseFloat(booking.price).toFixed(2)}
+              R$ {Number(booking.price).toFixed(2)}
             </p>
           </div>
         </Card>

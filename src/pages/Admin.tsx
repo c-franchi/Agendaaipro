@@ -48,9 +48,9 @@ export default function Admin() {
 
       toast.success("Login realizado com sucesso!");
       navigate("/admin/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Erro ao fazer login");
+      toast.error(error instanceof Error ? error.message : "Erro ao fazer login");
     } finally {
       setLoading(false);
     }

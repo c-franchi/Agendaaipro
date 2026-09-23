@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LogOut, ArrowLeft, Save, Calendar, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import type { User } from "@supabase/supabase-js";
 
 // Perfil do cliente com atualização de dados e senha
 export default function ClientePerfil() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -50,7 +51,7 @@ export default function ClientePerfil() {
 
       setFullName(profile?.full_name || "");
       setPhone(profile?.phone || "");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar perfil:", error);
       toast.error("Erro ao carregar perfil");
     } finally {
@@ -75,7 +76,7 @@ export default function ClientePerfil() {
       if (error) throw error;
 
       toast.success("Perfil atualizado com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao salvar perfil:", error);
       toast.error("Erro ao salvar perfil");
     } finally {
@@ -109,7 +110,7 @@ export default function ClientePerfil() {
       toast.success("Senha alterada com sucesso!");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao alterar senha:", error);
       toast.error("Erro ao alterar senha");
     } finally {

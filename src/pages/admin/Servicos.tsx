@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import type { Json } from "@/integrations/supabase/types";
 
 interface InterleavedBlock {
   start_min: number;
@@ -134,7 +135,7 @@ export default function Servicos() {
       duration_min: formData.duration_min,
       price: formData.price,
       is_active: formData.is_active,
-      interleaved_blocks: enableInterleaved ? (formData.interleaved_blocks as any) : null,
+      interleaved_blocks: enableInterleaved ? (formData.interleaved_blocks as unknown as Json) : null,
       allow_in_person_payment: formData.allow_in_person_payment,
     };
 

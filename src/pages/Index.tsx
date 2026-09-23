@@ -27,7 +27,7 @@ const fallbackPortfolio: PortfolioItem[] = [
   { id: "corte-6", title: "Degradê moderno", category: "Masculino", image_url: "/images/corte6.webp", alt_text: "Corte masculino moderno com degradê baixo" },
   { id: "corte-7", title: "Corte social", category: "Masculino", image_url: "/images/corte7.webp", alt_text: "Corte social masculino com acabamento lateral" },
   { id: "corte-4", title: "Alisamento e finalização", category: "Feminino", image_url: "/images/corte4.webp", alt_text: "Cabelo feminino longo, liso e finalizado" },
-  { id: "corte-5", title: "Design de sobrancelhas", category: "Feminino", image_url: "/images/corte5.png", alt_text: "Resultado de design de sobrancelhas feminino" },
+  { id: "corte-5", title: "Design de sobrancelhas", category: "Feminino", image_url: "/images/corte5.webp", alt_text: "Resultado de design de sobrancelhas feminino" },
 ];
 
 const Index = () => {
