@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { notifyCancellationRequest } from "@/utils/pwa";
-import type { User } from "@supabase/supabase-js";
+import type { User as AuthUser } from "@supabase/supabase-js";
 
 interface Booking {
   id: string;
@@ -38,7 +38,7 @@ export default function ClienteAgendamentos() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [rescheduleBooking, setRescheduleBooking] = useState<Booking | null>(null);
   const [cancelDialog, setCancelDialog] = useState<{ open: boolean; booking: Booking | null }>({
     open: false,

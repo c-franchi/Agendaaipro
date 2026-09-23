@@ -135,7 +135,7 @@ export default function Servicos() {
       duration_min: formData.duration_min,
       price: formData.price,
       is_active: formData.is_active,
-      interleaved_blocks: enableInterleaved ? (formData.interleaved_blocks as Json) : null,
+      interleaved_blocks: enableInterleaved ? (formData.interleaved_blocks as unknown as Json) : null,
       allow_in_person_payment: formData.allow_in_person_payment,
     };
 
