@@ -571,6 +571,14 @@ export type Database = {
         }
         Returns: Json
       }
+      get_booked_slots: {
+        Args: { p_booking_date: string }
+        Returns: {
+          booking_time: string
+          duration_min: number
+          interleaved_blocks: Json
+        }[]
+      }
       get_booking_by_token: {
         Args: { p_access_token: string; p_booking_id: string }
         Returns: {
@@ -606,6 +614,14 @@ export type Database = {
       }
       set_booking_payment_method: {
         Args: { p_access_token: string; p_booking_id: string; p_method: string }
+        Returns: boolean
+      }
+      set_booking_receipt: {
+        Args: {
+          p_access_token: string
+          p_booking_id: string
+          p_receipt_path: string
+        }
         Returns: boolean
       }
     }
