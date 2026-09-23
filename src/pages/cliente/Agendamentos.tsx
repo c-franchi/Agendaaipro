@@ -46,19 +46,8 @@ export default function ClienteAgendamentos() {
 
   // Valida sessão e carrega agendamentos ao iniciar
   useEffect(() => {
-    checkAuth();
     loadBookings();
   }, []);
-
-  // Verifica se o cliente está autenticado
-  async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/cliente");
-      return;
-    }
-    setUser(session.user);
-  }
 
   // Carrega agendamentos do cliente pelo telefone
   async function loadBookings() {
@@ -68,16 +57,7 @@ export default function ClienteAgendamentos() {
       
       if (!session) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("phone")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!profile?.phone) {
-        setBookings([]);
-        return;
-      }
+      setUser(session.user);
 
       const { data, error } = await supabase
         .from("bookings")
@@ -88,7 +68,7 @@ export default function ClienteAgendamentos() {
             duration_min
           )
         `)
-        .eq("customer_whatsapp", profile.phone)
+        .eq("user_id", session.user.id)
         .order("booking_date", { ascending: false })
         .order("booking_time", { ascending: false });
 

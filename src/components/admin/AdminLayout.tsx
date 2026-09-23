@@ -65,7 +65,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const MenuContent = () => (
     <>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-sidebar-foreground">BarberPro</h1>
+        <h1 className="text-2xl font-bold text-sidebar-foreground">Eric Zambonini</h1>
         <p className="text-sm text-sidebar-foreground/60">Admin</p>
       </div>
 
@@ -125,7 +125,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Header */}
       <header className="lg:hidden flex items-center justify-between p-4 border-b border-sidebar-border bg-sidebar">
         <div>
-          <h1 className="text-xl font-bold text-sidebar-foreground">BarberPro</h1>
+          <h1 className="text-xl font-bold text-sidebar-foreground">Eric Zambonini</h1>
           <p className="text-xs text-sidebar-foreground/60">Admin</p>
         </div>
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

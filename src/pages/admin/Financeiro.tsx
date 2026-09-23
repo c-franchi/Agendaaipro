@@ -85,11 +85,14 @@ export default function Financeiro() {
     setSelectedBooking(booking);
     
     if (booking.receipt_url) {
-      const { data } = supabase.storage
+      const { data, error } = await supabase.storage
         .from('payment-receipts')
-        .getPublicUrl(booking.receipt_url);
-      
-      setReceiptImageUrl(data.publicUrl);
+        .createSignedUrl(booking.receipt_url, 120);
+      if (error) {
+        toast.error("Não foi possível abrir o comprovante");
+        return;
+      }
+      setReceiptImageUrl(data.signedUrl);
     }
     
     setReceiptDialogOpen(true);
