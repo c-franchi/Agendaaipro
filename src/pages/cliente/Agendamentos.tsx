@@ -75,7 +75,7 @@ export default function ClienteAgendamentos() {
       if (error) throw error;
 
       setBookings(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar agendamentos:", error);
       toast.error("Erro ao carregar agendamentos");
     } finally {
@@ -198,7 +198,7 @@ export default function ClienteAgendamentos() {
       toast.success("Solicitação de cancelamento enviada! O profissional irá confirmar.");
       setCancelDialog({ open: false, booking: null });
       loadBookings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error("Erro ao enviar solicitação");
     }

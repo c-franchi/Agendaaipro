@@ -79,7 +79,7 @@ export default function Usuarios() {
       }));
 
       setAdmins(adminsData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar admins:", error);
       toast.error("Erro ao carregar administradores");
     } finally {
@@ -109,7 +109,7 @@ export default function Usuarios() {
 
       toast.success("Administrador removido com sucesso!");
       loadAdmins();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao remover admin:", error);
       toast.error("Erro ao remover administrador");
     }
@@ -144,9 +144,9 @@ export default function Usuarios() {
       setNewAdminPassword("");
       setDialogOpen(false);
       loadAdmins();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao adicionar admin:", error);
-      toast.error(error.message || "Erro ao adicionar administrador");
+      toast.error(error instanceof Error ? error.message : "Erro ao adicionar administrador");
     } finally {
       setAddingAdmin(false);
     }

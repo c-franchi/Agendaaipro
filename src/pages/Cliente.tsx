@@ -42,9 +42,9 @@ export default function Cliente() {
       toast.success("Login realizado com sucesso!");
       const requestedPath = (location.state as { from?: string } | null)?.from;
       navigate(requestedPath || "/cliente/agendamentos", { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Erro ao fazer login");
+      toast.error(error instanceof Error ? error.message : "Erro ao fazer login");
     } finally {
       setLoading(false);
     }
@@ -91,9 +91,9 @@ export default function Cliente() {
       // Switch to login tab
       const loginTab = document.querySelector('[value="login"]') as HTMLElement;
       loginTab?.click();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Erro ao criar conta");
+      toast.error(error instanceof Error ? error.message : "Erro ao criar conta");
     } finally {
       setLoading(false);
     }

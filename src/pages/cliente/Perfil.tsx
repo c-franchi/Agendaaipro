@@ -50,7 +50,7 @@ export default function ClientePerfil() {
 
       setFullName(profile?.full_name || "");
       setPhone(profile?.phone || "");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar perfil:", error);
       toast.error("Erro ao carregar perfil");
     } finally {
@@ -75,7 +75,7 @@ export default function ClientePerfil() {
       if (error) throw error;
 
       toast.success("Perfil atualizado com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao salvar perfil:", error);
       toast.error("Erro ao salvar perfil");
     } finally {
@@ -109,7 +109,7 @@ export default function ClientePerfil() {
       toast.success("Senha alterada com sucesso!");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao alterar senha:", error);
       toast.error("Erro ao alterar senha");
     } finally {

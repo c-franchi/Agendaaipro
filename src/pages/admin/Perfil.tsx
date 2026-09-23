@@ -63,9 +63,9 @@ export default function Perfil() {
       if (profileError) throw profileError;
 
       toast.success("Perfil atualizado com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Erro ao atualizar perfil");
+      toast.error(error instanceof Error ? error.message : "Erro ao atualizar perfil");
     } finally {
       setLoading(false);
     }
@@ -98,9 +98,9 @@ export default function Perfil() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error(error.message || "Erro ao alterar senha");
+      toast.error(error instanceof Error ? error.message : "Erro ao alterar senha");
     } finally {
       setLoading(false);
     }
