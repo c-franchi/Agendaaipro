@@ -103,7 +103,7 @@ const Index = () => {
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">Beleza masculina e feminina · Desde 2001</p>
           <h1 className="max-w-4xl text-5xl font-bold leading-tight text-foreground md:text-7xl">{name}</h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-foreground/85 md:text-xl">
-            {barber?.bio || "Cuidado, técnica e atendimento personalizado para valorizar o seu estilo."}
+            Atendimento masculino e feminino com experiência, técnica e cuidado desde 2001.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button asChild size="lg" className="h-12 px-7"><Link to="/agendar"><CalendarDays className="mr-2 h-5 w-5" />Agendar horário</Link></Button>

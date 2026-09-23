@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-// Barber-On - Sistema de Agendamento para Barbearias
+// Eric Zambonini — atendimento e agendamento online.
 export default defineConfig({
   server: {
     host: "::",

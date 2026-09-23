@@ -205,32 +205,6 @@ export default function Agendar() {
       if (!selectedDate || !selectedService || !userProfile) throw new Error("Dados incompletos");
       const dateStr = formatLocalDate(selectedDate);
 
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      const { data: existingConversation } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("customer_whatsapp", userProfile!.phone)
-        .maybeSingle();
-
-      let conversationId = existingConversation?.id;
-
-      if (!conversationId) {
-        const { data: newConversation, error: convError } = await supabase
-          .from("conversations")
-          .insert({
-            customer_name: userProfile!.full_name,
-            customer_whatsapp: userProfile!.phone,
-            user_id: session?.user?.id || null,
-          })
-          .select()
-          .single();
-
-        if (!convError && newConversation) {
-          conversationId = newConversation.id;
-        }
-      }
-
       const phone = userProfile.phone.replace(/\D/g, "");
       const { data, error } = await supabase.rpc("create_booking", {
         p_service_id: selectedService.id,

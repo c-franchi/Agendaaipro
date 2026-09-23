@@ -1,6 +1,6 @@
 // Sistema desenvolvido por Dev Nei
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { MessageCircle, ArrowLeft } from "lucide-react";
 // Área do cliente para login e cadastro
 export default function Cliente() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   
   // Login state
@@ -39,13 +40,31 @@ export default function Cliente() {
       if (error) throw error;
 
       toast.success("Login realizado com sucesso!");
-      navigate("/cliente/agendamentos");
+      const requestedPath = (location.state as { from?: string } | null)?.from;
+      navigate(requestedPath || "/cliente/agendamentos", { replace: true });
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Erro ao fazer login");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handlePasswordRecovery() {
+    if (!loginEmail) {
+      toast.error("Informe seu e-mail para recuperar a senha");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+      redirectTo: `${window.location.origin}/cliente/perfil`,
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Não foi possível enviar a recuperação de senha");
+      return;
+    }
+    toast.success("Enviamos as instruções de recuperação para o seu e-mail");
   }
 
   // Realiza cadastro do cliente no Supabase
@@ -134,6 +153,9 @@ export default function Cliente() {
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
+                </Button>
+                <Button type="button" variant="link" className="w-full" disabled={loading} onClick={handlePasswordRecovery}>
+                  Esqueci minha senha
                 </Button>
               </form>
             </TabsContent>
