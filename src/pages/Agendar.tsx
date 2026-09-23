@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { generateBookingToken } from "@/utils/token";
-import { scheduleNotification, notifyNewBooking } from "@/utils/pwa";
+import { scheduleNotification } from "@/utils/pwa";
 import { ArrowLeft } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -65,7 +64,7 @@ export default function Agendar() {
     if (!selectedDate || !selectedService) return;
 
     const weekday = selectedDate.getDay();
-    const dateStr = selectedDate.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(selectedDate);
 
     // Buscar regras de disponibilidade
     const { data: rules, error: rulesError } = await supabase
@@ -89,11 +88,7 @@ export default function Agendar() {
     }
 
     // Buscar agendamentos do dia com informações do serviço
-    const { data: bookings } = await supabase
-      .from("bookings")
-      .select("booking_time, service_id, services(duration_min, interleaved_blocks)")
-      .eq("booking_date", dateStr)
-      .in("status", ["PENDING_PAYMENT", "CONFIRMED"]);
+    const { data: bookings } = await supabase.rpc("get_booked_slots", { p_booking_date: dateStr });
 
     // Função auxiliar para verificar conflito entre horários
     // Verifica se um horário conflita com agendamentos existentes
@@ -105,7 +100,7 @@ export default function Agendar() {
 
       for (const booking of bookings) {
         const bookingTimeMin = timeToMinutes(booking.booking_time);
-        const bookingService = (booking as any).services;
+        const bookingService = booking;
         const bookingBlocks = getOccupiedBlocks(bookingTimeMin, bookingService);
 
         // Verificar sobreposição entre blocos ocupados
@@ -175,7 +170,7 @@ export default function Agendar() {
       const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
       
       // Verificar se não há conflito
-      if (!hasConflict(timeStr, selectedService)) {
+      if (currentMin + selectedService.duration_min <= endMin && !hasConflict(timeStr, selectedService)) {
         slots.push(timeStr);
       }
       
@@ -207,15 +202,8 @@ export default function Agendar() {
     setLoading(true);
 
     try {
-      const { data: settingsData } = await supabase
-        .from("settings")
-        .select("require_payment_on_booking")
-        .single();
-
-      const requirePayment = settingsData?.require_payment_on_booking ?? true;
-
-      const token = generateBookingToken(crypto.randomUUID());
-      const dateStr = selectedDate!.toISOString().split('T')[0];
+      if (!selectedDate || !selectedService || !userProfile) throw new Error("Dados incompletos");
+      const dateStr = formatLocalDate(selectedDate);
 
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -243,55 +231,25 @@ export default function Agendar() {
         }
       }
 
-      // Definir status baseado na configuração de pagamento
-      const bookingStatus = requirePayment ? "PENDING_PAYMENT" : "CONFIRMED";
-
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert({
-          service_id: selectedService!.id,
-          customer_name: userProfile!.full_name,
-          customer_whatsapp: userProfile!.phone,
-          booking_date: dateStr,
-          booking_time: selectedTime,
-          price: selectedService!.price,
-          token,
-          status: bookingStatus
-        })
-        .select()
-        .single();
+      const phone = userProfile.phone.replace(/\D/g, "");
+      const { data, error } = await supabase.rpc("create_booking", {
+        p_service_id: selectedService.id,
+        p_customer_name: userProfile.full_name,
+        p_customer_whatsapp: phone,
+        p_booking_date: dateStr,
+        p_booking_time: selectedTime,
+      });
 
       if (error) throw error;
+      const result = data as { booking_id: string; access_token: string; requires_payment: boolean };
 
-      // Mensagem apropriada baseada no tipo de pagamento
-      const paymentMessage = requirePayment 
-        ? "\n\nPara confirmar, realize o pagamento via Pix. Aguardamos você!"
-        : "\n\nPagamento será realizado presencialmente. Aguardamos você!";
+      scheduleNotification(dateStr, selectedTime, userProfile.full_name);
 
-      if (conversationId) {
-        await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          sender_type: "admin",
-          content: `🎉 Olá ${userProfile!.full_name}! Seu agendamento foi criado com sucesso!\n\n📋 Serviço: ${selectedService!.name}\n📅 Data: ${selectedDate!.toLocaleDateString('pt-BR')}\n⏰ Horário: ${selectedTime}\n💰 Valor: R$ ${parseFloat(selectedService!.price).toFixed(2)}${paymentMessage}`,
-          status: "sent",
-        });
-      }
-
-      scheduleNotification(dateStr, selectedTime, userProfile!.full_name);
-      notifyNewBooking(userProfile!.full_name, selectedService!.name, dateStr, selectedTime);
-
-      if (requirePayment) {
-        toast.success("Agendamento criado! Redirecionando para pagamento...");
-        // Redirecionar para pagamento
-        navigate(`/pagar?booking=${data.id}&token=${token}`);
-      } else {
-        toast.success("Agendamento confirmado! Pagamento será realizado presencialmente.");
-        // Redirecionar para página de agendamentos do cliente
-        setTimeout(() => navigate("/cliente/agendamentos"), 2000);
-      }
+      toast.success("Solicitação criada. Escolha a forma de pagamento.");
+      navigate(`/pagar?booking=${result.booking_id}&token=${result.access_token}`);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao criar agendamento");
+      toast.error(error instanceof Error ? error.message : "Erro ao criar agendamento");
     } finally {
       setLoading(false);
     }
@@ -448,4 +406,11 @@ export default function Agendar() {
       </div>
     </div>
   );
+}
+
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
