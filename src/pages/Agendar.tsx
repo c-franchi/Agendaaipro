@@ -1,5 +1,5 @@
 // Sistema desenvolvido por Dev Nei
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export default function Agendar() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const slotsRequest = useRef(0);
   const [selectedTime, setSelectedTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<{ full_name: string; phone: string } | null>(null);
@@ -57,8 +58,11 @@ export default function Agendar() {
 
   // Atualiza horários disponíveis ao mudar data/serviço
   useEffect(() => {
+    const requestId = ++slotsRequest.current;
+    setSelectedTime("");
+    setAvailableSlots([]);
     if (selectedDate && selectedService) {
-      loadAvailableSlots();
+      void loadAvailableSlots(requestId);
     }
   }, [selectedDate, selectedService]);
 
@@ -76,7 +80,7 @@ export default function Agendar() {
   }
 
   // Calcula horários disponíveis com base nas regras e agendamentos
-  async function loadAvailableSlots() {
+  async function loadAvailableSlots(requestId: number) {
     if (!selectedDate || !selectedService) return;
 
     const weekday = selectedDate.getDay();
@@ -91,6 +95,7 @@ export default function Agendar() {
       .maybeSingle();
 
     if (rulesError) {
+      if (requestId !== slotsRequest.current) return;
       console.error("Erro ao buscar regras:", rulesError);
       toast.error("Erro ao carregar horários disponíveis");
       setAvailableSlots([]);
@@ -98,13 +103,20 @@ export default function Agendar() {
     }
 
     if (!rules) {
+      if (requestId !== slotsRequest.current) return;
       console.log("Nenhuma regra encontrada para o dia:", weekday);
       setAvailableSlots([]);
       return;
     }
 
     // Buscar agendamentos do dia com informações do serviço
-    const { data: bookings } = await supabase.rpc("get_booked_slots", { p_booking_date: dateStr });
+    const { data: bookings, error: bookingsError } = await supabase.rpc("get_booked_slots", { p_booking_date: dateStr });
+    if (bookingsError) {
+      if (requestId !== slotsRequest.current) return;
+      toast.error("Erro ao carregar agendamentos do dia");
+      setAvailableSlots([]);
+      return;
+    }
 
     // Função auxiliar para verificar conflito entre horários
     // Verifica se um horário conflita com agendamentos existentes
@@ -186,14 +198,15 @@ export default function Agendar() {
       const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
       
       // Verificar se não há conflito
-      if (currentMin + selectedService.duration_min <= endMin && !hasConflict(timeStr, selectedService)) {
+      const isPast = dateStr === formatLocalDate(new Date()) && currentMin <= new Date().getHours() * 60 + new Date().getMinutes();
+      if (!isPast && currentMin + selectedService.duration_min <= endMin && !hasConflict(timeStr, selectedService)) {
         slots.push(timeStr);
       }
       
       currentMin += rules.slot_min;
     }
 
-    setAvailableSlots(slots);
+    if (requestId === slotsRequest.current) setAvailableSlots(slots);
   }
 
   // Valida dados antes de abrir o modal de confirmação
@@ -320,7 +333,7 @@ export default function Agendar() {
                   setSelectedDate(date);
                   if (date) setStep(3);
                 }}
-                disabled={(date) => date < new Date() || date.getDay() === 0}
+                disabled={(date) => formatLocalDate(date) < formatLocalDate(new Date()) || date.getDay() === 0}
                 className="rounded-md border border-border"
               />
               <Button variant="outline" className="mt-4" onClick={() => setStep(1)}>
