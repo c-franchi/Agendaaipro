@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { generatePixPayload, generatePixQRCode, PixPayload } from "@/utils/pix";
+import { generatePixPayload, generatePixQRCode } from "@/utils/pix";
 import { Copy, Download, ArrowLeft, CheckCircle, Upload, CreditCard, Banknote } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -47,6 +47,24 @@ export default function Pagar() {
     }
   }, [bookingId, token]);
 
+  // Regenerate the QR code when an existing Pix payment is reopened.
+  useEffect(() => {
+    if (paymentMethod !== "pix" || !booking || !settings) return;
+    if (!settings.pix_chave || !settings.pix_nome_recebedor || !settings.pix_cidade) {
+      toast.error("O Pix ainda não foi configurado. Entre em contato com o profissional.");
+      return;
+    }
+    const payload = generatePixPayload({
+      chavePix: settings.pix_chave,
+      nomeRecebedor: settings.pix_nome_recebedor,
+      cidade: settings.pix_cidade,
+      valor: Number(booking.price),
+      txid: booking.id.slice(0, 8),
+    });
+    setPixCode(payload);
+    generatePixQRCode(payload).then(setQrCodeUrl).catch(() => toast.error("Erro ao gerar QR Code Pix"));
+  }, [paymentMethod, booking, settings]);
+
   // Busca agendamento, serviço e configurações para pagamento
   async function loadBooking() {
     if (!bookingId || !token) return;
@@ -76,25 +94,6 @@ export default function Pagar() {
     setLoading(false);
   }
 
-  // Gera payload e QR Code Pix com base no valor do serviço
-  async function generatePixCode() {
-    if (!settings || !booking) return;
-    
-    const pixPayload: PixPayload = {
-      chavePix: settings.pix_chave || "",
-      nomeRecebedor: settings.pix_nome_recebedor || "",
-      cidade: settings.pix_cidade || "",
-      valor: Number(booking.price),
-      txid: booking.id.slice(0, 8)
-    };
-
-    const payload = generatePixPayload(pixPayload);
-    setPixCode(payload);
-
-    const qrCode = await generatePixQRCode(payload);
-    setQrCodeUrl(qrCode);
-  }
-
   // Define método de pagamento e atualiza no banco
   async function selectPaymentMethod(method: "pix" | "presencial") {
     if (!bookingId || !token) return;
@@ -109,9 +108,6 @@ export default function Pagar() {
     }
     setPaymentMethod(method);
 
-    if (method === "pix") {
-      await generatePixCode();
-    }
   }
 
   // Copia o código Pix para a área de transferência

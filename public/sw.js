@@ -1,6 +1,6 @@
 // Sistema desenvolvido por Dev Nei
 // Service Worker para cache offline e notificações
-const CACHE_NAME = 'eric-zambonini-v2';
+const CACHE_NAME = 'eric-zambonini-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -16,12 +16,19 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Estratégia de cache: responde do cache e busca na rede como fallback
+// Cache only public, same-origin static assets. Never store authenticated pages or API responses.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+  const isPublicAsset = url.pathname.startsWith('/assets/') ||
+    ['/manifest.json', '/favicon.png', '/icon-192.png', '/icon-512.png'].includes(url.pathname);
+  if (!isPublicAsset) return;
   event.respondWith(fetch(event.request).then((response) => {
-    const copy = response.clone();
-    caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+    if (response.ok && response.type === 'basic') {
+      const copy = response.clone();
+      event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)));
+    }
     return response;
   }).catch(() => caches.match(event.request)));
 });
