@@ -37,6 +37,6 @@ export default function ProtectedRoute({ children, role }: ProtectedRouteProps) 
   }, [validateSession]);
 
   if (state === "loading") return <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">Verificando acesso...</div>;
-  if (state === "denied") return <Navigate to={role === "admin" ? "/admin" : "/cliente"} replace state={{ from: location.pathname }} />;
+  if (state === "denied") return <Navigate to={role === "admin" ? "/admin" : "/cliente"} replace state={{ from: location.pathname + location.search }} />;
   return <>{children}</>;
 }
