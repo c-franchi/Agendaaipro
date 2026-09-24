@@ -33,6 +33,8 @@ const fallbackPortfolio: PortfolioItem[] = [
 const Index = () => {
   const [barber, setBarber] = useState<BarberProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [servicesError, setServicesError] = useState(false);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(fallbackPortfolio);
   const [portfolioUrls, setPortfolioUrls] = useState<Record<string, string>>({});
   const [category, setCategory] = useState("Todos");
@@ -48,6 +50,8 @@ const Index = () => {
       ]);
       if (profileResult.data) setBarber(profileResult.data as BarberProfile);
       setServices((servicesResult.data as Service[]) || []);
+      setServicesError(Boolean(servicesResult.error));
+      setServicesLoading(false);
       if (portfolioResult.data?.length) {
         const items = portfolioResult.data as PortfolioItem[];
         setPortfolio(items);
@@ -59,7 +63,7 @@ const Index = () => {
         setPortfolioUrls(Object.fromEntries(signedEntries));
       }
     };
-    loadData();
+    void loadData();
   }, []);
 
   const filteredPortfolio = useMemo(
@@ -68,7 +72,7 @@ const Index = () => {
   );
   const categories = ["Todos", ...Array.from(new Set(portfolio.map((item) => item.category)))];
   const name = barber?.name || "Eric Zambonini";
-  const experience = Math.max(barber?.years_experience || 0, 25);
+  const experience = barber?.years_experience || 25;
   const instagram = barber?.instagram_url || "https://www.instagram.com/zamboninieric?stkn=ZTJ0ZmJ2bGRnYmNx";
   const facebook = barber?.facebook_url || "https://www.facebook.com/eric.zambonini.2025";
   const reviews = barber?.review_url || "https://g.page/r/CWECIhz8246XECE/review";
@@ -85,14 +89,14 @@ const Index = () => {
           <Link to="/cliente" className="text-sm text-muted-foreground hover:text-foreground">Área do cliente</Link>
           <Button asChild><Link to="/agendar">Agendar</Link></Button>
         </div>
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}>
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-controls="menu-mobile" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}>
           {menuOpen ? <X /> : <Menu />}
         </Button>
       </nav>
-      {menuOpen && <div className="border-t border-border bg-background px-4 py-4 md:hidden">
+      {menuOpen && <div id="menu-mobile" className="border-t border-border bg-background px-4 py-4 md:hidden">
         <div className="flex flex-col gap-1">
           {[['Serviços','#servicos'],['Trabalhos','#portfolio'],['Sobre','#sobre']].map(([label, href]) => <a key={href} href={href} onClick={() => setMenuOpen(false)} className="py-3 text-foreground">{label}</a>)}
-          <Link to="/cliente" className="py-3 text-foreground">Área do cliente</Link>
+          <Link to="/cliente" onClick={() => setMenuOpen(false)} className="py-3 text-foreground">Área do cliente</Link>
           <Button asChild className="mt-2 w-full"><Link to="/agendar">Agendar horário</Link></Button>
         </div>
       </div>}
@@ -100,7 +104,7 @@ const Index = () => {
 
     <main>
       <section id="inicio" className="relative flex min-h-[92svh] items-end overflow-hidden pt-16">
-        <img src="/images/hero-eric.webp" alt="Espaço de atendimento Eric Zambonini" className="absolute inset-0 h-full w-full object-cover" />
+        <img src="/images/hero-eric.webp" alt="Espaço de atendimento Eric Zambonini" fetchPriority="high" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/45 to-background/15" />
         <div className="container relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-28 md:pb-24">
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-primary">Beleza masculina e feminina · Mais de 25 anos de experiência</p>
@@ -115,15 +119,18 @@ const Index = () => {
         </div>
       </section>
 
-      <section id="servicos" className="py-20 md:py-28">
+      <section id="servicos" className="scroll-mt-16 py-20 md:py-28">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="mb-10 max-w-2xl">
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">Atendimento personalizado</p>
             <h2 className="text-3xl font-bold md:text-5xl">Serviços</h2>
             <p className="mt-4 text-muted-foreground">Escolha o serviço e consulte os horários disponíveis na agenda.</p>
           </div>
+          {servicesLoading && <p role="status" className="text-muted-foreground">Carregando serviços...</p>}
+          {!servicesLoading && servicesError && <p role="alert" className="rounded-lg border border-border bg-card p-6 text-muted-foreground">Não foi possível carregar os serviços agora. Tente novamente em instantes.</p>}
+          {!servicesLoading && !servicesError && services.length === 0 && <p className="rounded-lg border border-border bg-card p-6 text-muted-foreground">A agenda de serviços está sendo atualizada. Entre em contato para consultar os horários.</p>}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => <Card key={service.id} className="flex min-h-56 flex-col border-border bg-card p-6">
+            {services.map((service) => <Card key={service.id} className="flex min-h-56 flex-col border-border bg-card p-6 transition-colors hover:border-primary/50">
               <Scissors className="mb-6 h-6 w-6 text-primary" />
               <h3 className="text-xl font-semibold">{service.name}</h3>
               {service.description && <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{service.description}</p>}
@@ -131,13 +138,14 @@ const Index = () => {
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground"><Clock3 className="h-4 w-4" />{service.duration_min} min</span>
                 <strong className="text-xl text-primary">{Number(service.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
               </div>
+              <Button asChild variant="outline" className="mt-5 w-full"><Link to={`/agendar?service=${encodeURIComponent(service.id)}`}>Agendar este serviço</Link></Button>
             </Card>)}
           </div>
-          <Button asChild size="lg" className="mt-10"><Link to="/agendar">Ver horários disponíveis</Link></Button>
+          {services.length > 0 && <Button asChild size="lg" className="mt-10"><Link to="/agendar">Ver todos os horários</Link></Button>}
         </div>
       </section>
 
-      <section id="portfolio" className="border-y border-border bg-card py-20 md:py-28">
+      <section id="portfolio" className="scroll-mt-16 border-y border-border bg-card py-20 md:py-28">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div><p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary">Portfólio real</p><h2 className="text-3xl font-bold md:text-5xl">Trabalhos realizados</h2></div>
@@ -147,14 +155,14 @@ const Index = () => {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
             {filteredPortfolio.map((item) => <button key={item.id} type="button" onClick={() => setSelectedImage(item)} className="group relative aspect-[4/5] overflow-hidden rounded-md bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <img src={portfolioUrls[item.id] || item.image_url} alt={item.alt_text} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img src={portfolioUrls[item.id] || item.image_url} alt={item.alt_text} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/95 to-transparent p-4 pt-12 text-sm font-medium text-foreground">{item.title}</span>
             </button>)}
           </div>
         </div>
       </section>
 
-      <section id="sobre" className="py-20 md:py-28">
+      <section id="sobre" className="scroll-mt-16 py-20 md:py-28">
         <div className="container mx-auto grid max-w-7xl gap-10 px-4 md:grid-cols-[1fr_1.2fr] md:items-center">
           <div className="border-l-2 border-primary pl-6">
             <Award className="mb-5 h-9 w-9 text-primary" />
@@ -174,7 +182,7 @@ const Index = () => {
       </section>
     </main>
 
-    <footer className="border-t border-border bg-card py-12">
+    <footer className="border-t border-border bg-card pb-28 pt-12 md:pb-12">
       <div className="container mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-3">
         <div><p className="text-lg font-semibold">{name}</p><p className="mt-2 text-sm text-muted-foreground">Beleza masculina e feminina há mais de 25 anos.</p></div>
         <div>{barber?.address_text && <><p className="font-medium">Localização</p><p className="mt-2 text-sm text-muted-foreground">{barber.address_text}</p></>}</div>
@@ -188,6 +196,10 @@ const Index = () => {
         <span>© 2026 {name}. Todos os direitos reservados.</span><div className="flex flex-wrap gap-4"><Link to="/privacidade" className="hover:text-foreground">Privacidade</Link><Link to="/termos" className="hover:text-foreground">Termos</Link><Link to="/admin" className="hover:text-foreground">Acesso administrativo</Link></div>
       </div>
     </footer>
+
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur md:hidden">
+      <Button asChild size="lg" className="w-full"><Link to="/agendar"><CalendarDays className="mr-2 h-5 w-5" />Agendar horário</Link></Button>
+    </div>
 
     <Dialog open={Boolean(selectedImage)} onOpenChange={(open) => !open && setSelectedImage(null)}>
       <DialogContent className="max-w-4xl border-border bg-card p-2 sm:p-3">
