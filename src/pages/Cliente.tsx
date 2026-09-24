@@ -15,6 +15,18 @@ export default function Cliente() {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState("login");
+  const [notice, setNotice] = useState("");
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+
+  function authMessage(error: unknown, fallback: string) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === "invalid_credentials") return "E-mail ou senha não conferem. Verifique os dados ou solicite a recuperação de senha.";
+    if (code === "email_not_confirmed") return "Confirme seu e-mail antes de entrar. Verifique também a caixa de spam.";
+    if (code === "over_email_send_rate_limit" || code === "over_request_rate_limit") return "Limite de tentativas atingido. Aguarde alguns minutos antes de tentar novamente.";
+    if (code === "email_address_not_authorized") return "O envio de e-mails está restrito na configuração do sistema. Entre em contato com o salão.";
+    return fallback;
+  }
   
   // Login state
   const [loginEmail, setLoginEmail] = useState("");
@@ -33,38 +45,61 @@ export default function Cliente() {
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: loginEmail.trim().toLowerCase(),
         password: loginPassword,
       });
 
-      if (error) throw error;
+      if (error) {
+        setNeedsConfirmation(error.code === "email_not_confirmed");
+        throw error;
+      }
 
       toast.success("Login realizado com sucesso!");
       const requestedPath = (location.state as { from?: string } | null)?.from;
       navigate(requestedPath || "/cliente/agendamentos", { replace: true });
     } catch (error: unknown) {
       console.error(error);
-      toast.error(error instanceof Error ? error.message : "Erro ao fazer login");
+      toast.error(authMessage(error, "Não foi possível entrar. Verifique sua conexão e tente novamente."));
     } finally {
       setLoading(false);
     }
   }
 
   async function handlePasswordRecovery() {
-    if (!loginEmail) {
+    const email = loginEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast.error("Informe seu e-mail para recuperar a senha");
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
-      redirectTo: `${window.location.origin}/cliente/perfil`,
-    });
-    setLoading(false);
-    if (error) {
-      toast.error("Não foi possível enviar a recuperação de senha");
-      return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/cliente/perfil`,
+      });
+      if (error) throw error;
+      setNotice("Se houver uma conta para este e-mail, você receberá as instruções de recuperação. Verifique também o spam.");
+    } catch (error) {
+      toast.error(authMessage(error, "Não foi possível solicitar a recuperação de senha. Tente novamente mais tarde."));
+    } finally {
+      setLoading(false);
     }
-    toast.success("Enviamos as instruções de recuperação para o seu e-mail");
+  }
+
+  async function resendConfirmation() {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: loginEmail.trim().toLowerCase(),
+        options: { emailRedirectTo: `${window.location.origin}/cliente` },
+      });
+      if (error) throw error;
+      setNotice("Solicitação de confirmação recebida. Verifique seu e-mail e a caixa de spam.");
+    } catch (error) {
+      toast.error(authMessage(error, "Não foi possível reenviar a confirmação. Tente novamente mais tarde."));
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Realiza cadastro do cliente no Supabase
@@ -73,27 +108,37 @@ export default function Cliente() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email: signupEmail,
+      const email = signupEmail.trim().toLowerCase();
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password: signupPassword,
         options: {
           data: {
             full_name: signupFullName,
             phone: signupPhone,
           },
-          emailRedirectTo: `${window.location.origin}/cliente/agendamentos`,
+          emailRedirectTo: `${window.location.origin}/cliente`,
         },
       });
 
       if (error) throw error;
 
-      toast.success("Cadastro realizado! Você já pode fazer login.");
-      // Switch to login tab
-      const loginTab = document.querySelector('[value="login"]') as HTMLElement;
-      loginTab?.click();
+      // O cadastro sempre termina na aba de login, mesmo com confirmação desativada.
+      if (data.session) {
+        const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+        if (signOutError) throw signOutError;
+      }
+      setLoginEmail(email);
+      setLoginPassword("");
+      setSignupPassword("");
+      setNeedsConfirmation(!data.session);
+      setNotice(data.session
+        ? "Cadastro realizado. Entre com seu e-mail e senha."
+        : "Cadastro recebido. Confirme seu e-mail antes de entrar. Se você já tem uma conta, use sua senha ou solicite a recuperação.");
+      setTab("login");
     } catch (error: unknown) {
       console.error(error);
-      toast.error(error instanceof Error ? error.message : "Erro ao criar conta");
+      toast.error(authMessage(error, "Não foi possível concluir o cadastro. Confira seus dados e tente novamente."));
     } finally {
       setLoading(false);
     }
@@ -119,7 +164,8 @@ export default function Cliente() {
             Acesse seu chat e acompanhe seus agendamentos
           </p>
 
-          <Tabs defaultValue="login" className="w-full">
+          {notice && <p role="status" className="mb-5 rounded-md border border-border bg-muted p-3 text-sm">{notice}</p>}
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
@@ -157,6 +203,7 @@ export default function Cliente() {
                 <Button type="button" variant="link" className="w-full" disabled={loading} onClick={handlePasswordRecovery}>
                   Esqueci minha senha
                 </Button>
+                {needsConfirmation && <Button type="button" variant="outline" className="w-full" disabled={loading} onClick={resendConfirmation}>Reenviar confirmação de e-mail</Button>}
               </form>
             </TabsContent>
 
