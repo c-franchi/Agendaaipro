@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { premiumDb, type ProfessionalPublic } from "@/lib/premium-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -18,7 +19,7 @@ type BarberProfile = {
   address_text?: string | null;
 };
 
-type Service = { id: string; name: string; description: string | null; duration_min: number; price: number };
+type Service = { id: string; name: string; description: string | null; duration_min: number; price: number; professional_id: string | null };
 type PortfolioItem = { id: string; title: string; category: string; image_url: string; alt_text: string };
 
 const fallbackPortfolio: PortfolioItem[] = [
@@ -33,6 +34,7 @@ const fallbackPortfolio: PortfolioItem[] = [
 const Index = () => {
   const [barber, setBarber] = useState<BarberProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
+  const [professionals, setProfessionals] = useState<ProfessionalPublic[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
   const [servicesError, setServicesError] = useState(false);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(fallbackPortfolio);
@@ -43,13 +45,15 @@ const Index = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const [profileResult, servicesResult, portfolioResult] = await Promise.all([
+      const [profileResult, servicesResult, portfolioResult, professionalsResult] = await Promise.all([
         supabase.from("barber_profile").select("*").maybeSingle(),
-        supabase.from("services").select("id,name,description,duration_min,price").eq("is_active", true).order("name"),
+        premiumDb.from("services").select("id,name,description,duration_min,price,professional_id").eq("is_active", true).order("name"),
         supabase.from("portfolio_items").select("id,title,category,image_url,alt_text").eq("is_active", true).order("sort_order"),
+        premiumDb.rpc("list_booking_professionals"),
       ]);
       if (profileResult.data) setBarber(profileResult.data as BarberProfile);
       setServices((servicesResult.data as Service[]) || []);
+      if (!professionalsResult.error) setProfessionals((professionalsResult.data || []) as ProfessionalPublic[]);
       setServicesError(Boolean(servicesResult.error));
       setServicesLoading(false);
       if (portfolioResult.data?.length) {
@@ -133,6 +137,7 @@ const Index = () => {
             {services.map((service) => <Card key={service.id} className="flex min-h-56 flex-col border-border bg-card p-6 transition-colors hover:border-primary/50">
               <Scissors className="mb-6 h-6 w-6 text-primary" />
               <h3 className="text-xl font-semibold">{service.name}</h3>
+              {service.professional_id && <p className="text-sm text-primary">Profissional: {professionals.find(p=>p.id===service.professional_id)?.display_name || "Atendimento"}</p>}
               {service.description && <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{service.description}</p>}
               <div className="mt-6 flex items-end justify-between gap-4 border-t border-border pt-4">
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground"><Clock3 className="h-4 w-4" />{service.duration_min} min</span>
