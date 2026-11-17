@@ -1,0 +1,45 @@
+name: Premium PR - build and TypeScript
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript type-check
+        run: npx tsc --noEmit -p tsconfig.app.json
+      - name: Vite production build
+        run: npm run build
+  audit-migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm ordered Premium migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f supabase/migrations/20261117150000_premium_business_team_foundation.sql
+          test -f supabase/migrations/20261117153000_premium_professional_scoping.sql
+          test -f supabase/migrations/20261117160000_premium_team_invites.sql
+          test -f supabase/migrations/20261117163000_premium_booking_v2.sql
+          test -f supabase/migrations/20261117170000_professional_schedule_rpc.sql
+          test -f supabase/migrations/20261117173000_premium_inventory_schema.sql
+          test -f supabase/migrations/20261117180000_premium_inventory_operations.sql
+          test -f supabase/migrations/20261117183000_premium_rescheduling.sql
+          test -f supabase/migrations/20261117184500_premium_entitlement_summary.sql
+          echo "Static file check passed. Actual Postgres migration/RLS tests still required."
