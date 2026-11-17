@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { premiumDb } from "@/lib/premium-api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -79,10 +80,10 @@ export default function Configuracoes() {
 
   // Busca regras de disponibilidade por dia
   async function fetchSchedules() {
-    const { data } = await supabase
-      .from("availability_rules")
-      .select("*")
-      .order("weekday", { ascending: true });
+    const { data: professional } = await premiumDb.rpc("my_professional_id");
+    let rulesQuery = premiumDb.from("availability_rules").select("*");
+    rulesQuery = professional ? rulesQuery.eq("professional_id", professional) : rulesQuery.is("professional_id", null);
+    const { data } = await rulesQuery.order("weekday", { ascending: true });
 
     if (data && data.length > 0) {
       setSchedules(data);
