@@ -24,6 +24,7 @@ import Portfolio from "./pages/admin/Portfolio";
 import Equipe from "./pages/admin/Equipe";
 import Profissional from "./pages/profissional/Profissional";
 import GestaoPremium from "./pages/profissional/GestaoPremium";
+import ProfissionalChat from "./pages/profissional/ProfissionalChat";
 import AceitarConvite from "./pages/profissional/AceitarConvite";
 import Legal from "./pages/Legal";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/admin/premium" element={<ProtectedRoute role="admin"><GestaoPremium admin /></ProtectedRoute>} />
           <Route path="/profissional" element={<ProtectedRoute><Profissional /></ProtectedRoute>} />
           <Route path="/profissional/gestao" element={<ProtectedRoute><GestaoPremium /></ProtectedRoute>} />
+          <Route path="/profissional/chat" element={<ProtectedRoute><ProfissionalChat /></ProtectedRoute>} />
           <Route path="/profissional/convite" element={<AceitarConvite />} />
           <Route path="/privacidade" element={<Legal page="privacy" />} />
           <Route path="/termos" element={<Legal page="terms" />} />
