@@ -21,6 +21,9 @@ import Configuracoes from "./pages/admin/Configuracoes";
 import Perfil from "./pages/admin/Perfil";
 import Usuarios from "./pages/admin/Usuarios";
 import Portfolio from "./pages/admin/Portfolio";
+import Equipe from "./pages/admin/Equipe";
+import Profissional from "./pages/profissional/Profissional";
+import AceitarConvite from "./pages/profissional/AceitarConvite";
 import Legal from "./pages/Legal";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -49,6 +52,9 @@ const App = () => (
           <Route path="/admin/perfil" element={<ProtectedRoute role="admin"><Perfil /></ProtectedRoute>} />
           <Route path="/admin/usuarios" element={<ProtectedRoute role="admin"><Usuarios /></ProtectedRoute>} />
           <Route path="/admin/portfolio" element={<ProtectedRoute role="admin"><Portfolio /></ProtectedRoute>} />
+          <Route path="/admin/equipe" element={<ProtectedRoute role="admin"><Equipe /></ProtectedRoute>} />
+          <Route path="/profissional" element={<ProtectedRoute><Profissional /></ProtectedRoute>} />
+          <Route path="/profissional/convite" element={<AceitarConvite />} />
           <Route path="/privacidade" element={<Legal page="privacy" />} />
           <Route path="/termos" element={<Legal page="terms" />} />
           <Route path="/cliente" element={<Cliente />} />
