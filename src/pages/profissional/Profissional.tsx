@@ -32,6 +32,7 @@ export default function Profissional() {
   const [newService,setNewService]=useState({name:"",description:"",duration_min:30,price:0});
   const [editingServiceId,setEditingServiceId]=useState("");
   const [block,setBlock]=useState({start_datetime:"",end_datetime:"",reason:"Indisponível"});
+  const [manual,setManual]=useState({serviceId:"",name:"",phone:"",date:"",time:""});
 
   const load=useCallback(async()=>{
     setLoading(true);
@@ -142,6 +143,27 @@ export default function Profissional() {
     }catch(e){toast.error(e instanceof Error?e.message:"Erro ao remover bloqueio");}
     finally{setBusy(false);}
   }
+  async function createManualBooking(e:React.FormEvent){
+    e.preventDefault();
+    if(!profile)return;
+    const phone=manual.phone.replace(/\D/g,"");
+    if(phone.length<10||phone.length>13){toast.error("Informe um WhatsApp com DDD");return;}
+    setBusy(true);
+    try{
+      const {error:err}=await premiumDb.rpc("professional_create_manual_booking",{
+        p_service_id:manual.serviceId,
+        p_customer_name:manual.name.trim(),
+        p_customer_whatsapp:phone,
+        p_booking_date:manual.date,
+        p_booking_time:manual.time,
+      });
+      if(err)throw err;
+      setManual({serviceId:"",name:"",phone:"",date:"",time:""});
+      toast.success("Atendimento cadastrado na sua agenda");
+      await load();
+    }catch(err){toast.error(err instanceof Error?err.message:"Não foi possível cadastrar atendimento");}
+    finally{setBusy(false);}
+  }
   async function viewReceipt(receiptPath:string){
     try{
       const {data,error:err}=await supabase.storage.from("payment-receipts").createSignedUrl(receiptPath,300);
@@ -189,6 +211,16 @@ export default function Profissional() {
             <Card><CardHeader><CardDescription>Confirmados</CardDescription><CardTitle>{stats.confirmed}</CardTitle></CardHeader></Card>
             <Card><CardHeader><CardDescription>Valor agendado confirmado</CardDescription><CardTitle>{formatBRL(stats.scheduledValue)}</CardTitle></CardHeader></Card>
           </div>
+          <Card><CardHeader><CardTitle>Novo agendamento manual</CardTitle><CardDescription>Reserve um horário para um cliente sem gerar cobrança automaticamente. A disponibilidade é conferida no servidor, inclusive contra reservas concorrentes.</CardDescription></CardHeader><CardContent>
+            <form onSubmit={createManualBooking} className="grid gap-3 sm:grid-cols-2">
+              <div><Label htmlFor="manualService">Serviço</Label><select id="manualService" required className="w-full rounded-md border bg-background p-2" value={manual.serviceId} onChange={e=>setManual(v=>({...v,serviceId:e.target.value}))}><option value="">Selecione</option>{services.filter(s=>s.is_active).map(s=><option key={s.id} value={s.id}>{s.name} · {s.duration_min} min</option>)}</select></div>
+              <div><Label htmlFor="manualCustomer">Nome do cliente</Label><Input id="manualCustomer" minLength={2} maxLength={100} required value={manual.name} onChange={e=>setManual(v=>({...v,name:e.target.value}))}/></div>
+              <div><Label htmlFor="manualPhone">WhatsApp com DDD</Label><Input id="manualPhone" inputMode="tel" required value={manual.phone} onChange={e=>setManual(v=>({...v,phone:e.target.value}))}/></div>
+              <div><Label htmlFor="manualDate">Data</Label><Input id="manualDate" type="date" required value={manual.date} onChange={e=>setManual(v=>({...v,date:e.target.value}))}/></div>
+              <div><Label htmlFor="manualTime">Horário</Label><Input id="manualTime" type="time" required value={manual.time} onChange={e=>setManual(v=>({...v,time:e.target.value}))}/></div>
+              <div className="flex items-end"><Button disabled={busy||!services.some(s=>s.id===manual.serviceId&&s.is_active)} type="submit">Registrar atendimento</Button></div>
+            </form>
+          </CardContent></Card>
           <Card><CardHeader><CardTitle>Próximos atendimentos</CardTitle></CardHeader><CardContent className="space-y-3">
             {bookings.length===0&&<p className="text-muted-foreground">Nenhum atendimento para os próximos dias.</p>}
             {bookings.map(b=><div key={b.id} className="flex flex-wrap justify-between gap-3 rounded-md border p-3">
