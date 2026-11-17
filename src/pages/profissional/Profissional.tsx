@@ -161,7 +161,7 @@ export default function Profissional() {
           <h1 className="text-3xl font-bold">{profile?.display_name||"Área profissional"}</h1>
           <p className="text-sm text-muted-foreground">{profile?.specialty||"Agenda, horários, serviços e clientes dos seus atendimentos"}</p>
         </div>
-        <div className="flex gap-2"><Button asChild variant="outline"><Link to="/profissional/chat">Mensagens</Link></Button><Button asChild variant="outline"><Link to="/profissional/gestao">Estoque e caixa</Link></Button>
+        <div className="flex gap-2"><Button asChild variant="outline"><Link to="/profissional/chat">Mensagens</Link></Button><Button asChild variant="outline"><Link to="/profissional/portfolio">Portfólio</Link></Button><Button asChild variant="outline"><Link to="/profissional/gestao">Estoque e caixa</Link></Button>
           <Button variant="outline" onClick={()=>void supabase.auth.signOut().then(()=>window.location.assign("/cliente"))}>Sair</Button></div>
       </header>
       {loading&&<p role="status">Carregando…</p>}
