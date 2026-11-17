@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 type Service = { id:string; name:string; description:string|null; duration_min:number; price:number; is_active:boolean; allow_in_person_payment:boolean|null };
+type ClientBooking = {customer_name:string; customer_whatsapp:string; booking_date:string};
 type Booking = { id:string; customer_name:string; customer_whatsapp:string; booking_date:string; booking_time:string; status:string; price:number; receipt_url:string|null; payment_method:string|null; services?:{name:string}|null };
 type Rule = { weekday:number; open_time:string; close_time:string; slot_min:number; is_active:boolean };
 type Block = { id:string; start_datetime:string; end_datetime:string; reason:string|null };
@@ -26,6 +27,7 @@ export default function Profissional() {
   const [profileForm,setProfileForm]=useState({display_name:"",specialty:""});
   const [services,setServices]=useState<Service[]>([]);
   const [bookings,setBookings]=useState<Booking[]>([]);
+  const [clientBookings,setClientBookings]=useState<ClientBooking[]>([]);
   const [rules,setRules]=useState<Rule[]>(defaultRules);
   const [blocks,setBlocks]=useState<Block[]>([]);
   const [error,setError]=useState("");
@@ -54,6 +56,7 @@ export default function Profissional() {
           .eq("professional_id",id).gte("booking_date",todayLocal()).order("booking_date").order("booking_time").limit(100),
         premiumDb.from("availability_rules").select("weekday,open_time,close_time,slot_min,is_active").eq("professional_id",id).order("weekday"),
         premiumDb.from("blocks").select("id,start_datetime,end_datetime,reason").eq("professional_id",id).gte("end_datetime",new Date().toISOString()).order("start_datetime"),
+        premiumDb.from("bookings").select("customer_name,customer_whatsapp,booking_date").eq("professional_id",id).order("booking_date",{ascending:false}).limit(500),
       ]);
       for(const result of results) if(result.error) throw result.error;
       setProfile(p);
@@ -63,6 +66,7 @@ export default function Profissional() {
       const saved=(results[2].data||[]) as Rule[];
       setRules(defaultRules.map(d=>{ const matches=saved.filter(s=>s.weekday===d.weekday); return matches[matches.length-1]||d; }));
       setBlocks((results[3].data||[]) as Block[]);
+      setClientBookings((results[4].data||[]) as ClientBooking[]);
       setError("");
     }catch(e){
       setError(e instanceof Error?e.message:"Erro ao carregar sua agenda.");
@@ -200,6 +204,17 @@ export default function Profissional() {
     finally{setBusy(false);}
   }
 
+  const clientList=useMemo(()=>{
+    const clients=new Map<string,{name:string;phone:string;count:number;lastDate:string}>();
+    for(const b of clientBookings){
+      const phone=b.customer_whatsapp?.replace(/\D/g,"")||"";
+      if(!phone)continue;
+      const existing=clients.get(phone);
+      if(existing){existing.count++;}
+      else clients.set(phone,{name:b.customer_name,phone,count:1,lastDate:b.booking_date});
+    }
+    return [...clients.values()];
+  },[clientBookings]);
   const stats=useMemo(()=>{
     const confirmed=bookings.filter(b=>b.status==="CONFIRMED");
     const completed=bookings.filter(b=>b.status==="COMPLETED");
@@ -221,7 +236,7 @@ export default function Profissional() {
       {error&&<Card><CardContent className="space-y-3 pt-6"><p role="alert">{error}</p><Button asChild variant="outline"><Link to="/cliente">Entrar na conta</Link></Button></CardContent></Card>}
       {profile&&!loading&&<Tabs defaultValue="agenda" className="space-y-4">
         <TabsList className="h-auto flex-wrap justify-start gap-1">
-          <TabsTrigger value="agenda">Agenda</TabsTrigger><TabsTrigger value="servicos">Serviços</TabsTrigger>
+          <TabsTrigger value="agenda">Agenda</TabsTrigger><TabsTrigger value="clientes">Clientes</TabsTrigger><TabsTrigger value="servicos">Serviços</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger><TabsTrigger value="financeiro">Resumo</TabsTrigger><TabsTrigger value="perfil">Meu perfil</TabsTrigger>
         </TabsList>
         <TabsContent value="agenda" className="space-y-4">
@@ -256,6 +271,13 @@ export default function Profissional() {
             </div>)}
           </CardContent></Card>
         </TabsContent>
+        <TabsContent value="clientes"><Card><CardHeader><CardTitle>Meus clientes</CardTitle><CardDescription>Apenas pessoas com atendimentos na sua agenda. Histórico consultado: até 500 agendamentos; nenhum cadastro do colega é exibido.</CardDescription></CardHeader><CardContent className="space-y-3">
+          {clientList.length===0&&<p className="text-muted-foreground">Nenhum cliente vinculado à sua agenda.</p>}
+          {clientList.map(client=><div key={client.phone} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+            <div><p className="font-semibold">{client.name}</p><p className="text-sm text-muted-foreground">{client.phone} · {client.count} atendimento(s) · Último: {client.lastDate.split("-").reverse().join("/")}</p></div>
+            <a className="text-sm text-primary underline" target="_blank" rel="noopener noreferrer" href={`https://wa.me/${client.phone.length>11?client.phone:"55"+client.phone}`}>WhatsApp</a>
+          </div>)}
+        </CardContent></Card></TabsContent>
         <TabsContent value="servicos" className="space-y-4">
           <Card><CardHeader><CardTitle>Meus serviços</CardTitle><CardDescription>Seus preços e serviços não alteram os dos outros profissionais.</CardDescription></CardHeader>
             <CardContent className="space-y-2">{services.map(s=><div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
