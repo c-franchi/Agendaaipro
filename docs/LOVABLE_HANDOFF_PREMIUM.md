@@ -17,7 +17,7 @@
 
 ## Checklist técnico — ordem segura e obrigatória
 
-- [ ] Revisar todas as migrations `20261117*` e as dependências de funções `private` existentes. **Aplicar apenas em cópia sanitizada/homologação** e gerar migração corrigida se houver erro de execução, não rodar direto em produção.
+- [ ] Revisar todas as migrations `20261117*` e as dependências de funções `private` existentes. **Aplicar apenas em cópia sanitizada/homologação** e gerar migração corrigida se houver erro de execução, não rodar direto em produção. Depois executar **`supabase/tests/premium_schema_smoke.sql`** com `psql -v ON_ERROR_STOP=1` no banco de homologação para validar tabelas, RLS, RPCs e triggers (somente leitura).
 - [ ] Executar projeto `npx tsc --noEmit -p tsconfig.app.json`, `npm run build`, ESLint, validar relógio de São Paulo, estoque e checkouts existentes.
 - [ ] Gerar `supabase/types.ts` atualizado após esquema real: eliminar a conversão temporária `premiumDb as SupabaseClient` gradualmente. Verificar exposição Data API, concessões e RLS em cada tabela.
 - [ ] Criar teste de isolamento com **três JWT reais** (titular, profissional convidado, cliente), rodando API REST, RPC, Storage e Realtime. Testar RLS de SELECT/INSERT/UPDATE/DELETE, inclusive tentativas manuais de alterar IDs.
