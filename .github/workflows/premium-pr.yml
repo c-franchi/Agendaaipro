@@ -48,4 +48,5 @@ jobs:
           test -f supabase/migrations/20261117184500_premium_entitlement_summary.sql
           test -f supabase/migrations/20261117190000_premium_chat_scoping.sql
           test -f supabase/migrations/20261117191500_premium_professional_portfolio.sql
+          test -f supabase/migrations/20261117193000_owner_schedule_isolation.sql
           echo "Static file check passed. Actual Postgres migration/RLS tests still required."
