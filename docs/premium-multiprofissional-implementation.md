@@ -1,5 +1,7 @@
 # Premium multiprofissional — arquitetura e critérios de implementação
 
+> Primeira entrega técnica nesta branch: `supabase/migrations/20261117150000_premium_business_team_foundation.sql` cria tabelas isoladas de negócio, direitos de assinatura, membros e perfis profissionais, RLS de leitura e trava de assentos no banco. **Não faz backfill, não libera convites, não altera agendamentos e não foi aplicada no banco de produção.** Executar testes SQL/RLS antes de merge.
+
 Status: **proposta técnica / implementação pendente**. Este documento não habilita funcionalidades no sistema publicado. Base analisada: `main` em 17/11/2026.
 
 ## Contexto verificado
