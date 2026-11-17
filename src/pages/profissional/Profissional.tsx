@@ -23,6 +23,7 @@ const todayLocal=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.g
 
 export default function Profissional() {
   const [profile,setProfile]=useState<Profile|null>(null);
+  const [profileForm,setProfileForm]=useState({display_name:"",specialty:""});
   const [services,setServices]=useState<Service[]>([]);
   const [bookings,setBookings]=useState<Booking[]>([]);
   const [rules,setRules]=useState<Rule[]>(defaultRules);
@@ -56,6 +57,7 @@ export default function Profissional() {
       ]);
       for(const result of results) if(result.error) throw result.error;
       setProfile(p);
+      setProfileForm({display_name:p.display_name,specialty:p.specialty||""});
       setServices((results[0].data||[]) as Service[]);
       setBookings((results[1].data||[]) as unknown as Booking[]);
       const saved=(results[2].data||[]) as Rule[];
@@ -145,6 +147,20 @@ export default function Profissional() {
     }catch(e){toast.error(e instanceof Error?e.message:"Erro ao remover bloqueio");}
     finally{setBusy(false);}
   }
+  async function saveProfile(e:React.FormEvent){
+    e.preventDefault();
+    setBusy(true);
+    try{
+      const {error:err}=await premiumDb.rpc("update_my_professional_profile",{
+        p_display_name:profileForm.display_name.trim(),
+        p_specialty:profileForm.specialty.trim()||null,
+      });
+      if(err)throw err;
+      toast.success("Seu perfil profissional foi atualizado");
+      await load();
+    }catch(err){toast.error(err instanceof Error?err.message:"Não foi possível atualizar perfil");}
+    finally{setBusy(false);}
+  }
   async function createManualBooking(e:React.FormEvent){
     e.preventDefault();
     if(!profile)return;
@@ -206,7 +222,7 @@ export default function Profissional() {
       {profile&&!loading&&<Tabs defaultValue="agenda" className="space-y-4">
         <TabsList className="h-auto flex-wrap justify-start gap-1">
           <TabsTrigger value="agenda">Agenda</TabsTrigger><TabsTrigger value="servicos">Serviços</TabsTrigger>
-          <TabsTrigger value="horarios">Horários</TabsTrigger><TabsTrigger value="financeiro">Resumo</TabsTrigger>
+          <TabsTrigger value="horarios">Horários</TabsTrigger><TabsTrigger value="financeiro">Resumo</TabsTrigger><TabsTrigger value="perfil">Meu perfil</TabsTrigger>
         </TabsList>
         <TabsContent value="agenda" className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -283,6 +299,13 @@ export default function Profissional() {
             </div>)}
           </CardContent></Card>
         </TabsContent>
+        <TabsContent value="perfil"><Card><CardHeader><CardTitle>Meu perfil profissional</CardTitle>
+          <CardDescription>Nome e especialidade exibidos aos clientes. Suas alterações não modificam o nome nem as configurações gerais do estabelecimento.</CardDescription></CardHeader>
+          <CardContent><form onSubmit={saveProfile} className="space-y-4">
+            <div><Label htmlFor="professionalDisplayName">Nome profissional</Label><Input id="professionalDisplayName" minLength={2} maxLength={100} required value={profileForm.display_name} onChange={e=>setProfileForm(v=>({...v,display_name:e.target.value}))}/></div>
+            <div><Label htmlFor="professionalSpecialty">Especialidade</Label><Input id="professionalSpecialty" maxLength={120} value={profileForm.specialty} onChange={e=>setProfileForm(v=>({...v,specialty:e.target.value}))}/></div>
+            <Button type="submit" disabled={busy}>Salvar meu perfil</Button>
+          </form></CardContent></Card></TabsContent>
         <TabsContent value="financeiro">
           <Card><CardHeader><CardTitle>Meu resumo</CardTitle><CardDescription>Totais de agendamentos futuros, não substituem o livro-caixa e não representam recebimentos reais.</CardDescription></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-3">
