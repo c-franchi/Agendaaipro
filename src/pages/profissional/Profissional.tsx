@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-type Service = { id:string; name:string; description:string|null; duration_min:number; price:number; is_active:boolean };
+type Service = { id:string; name:string; description:string|null; duration_min:number; price:number; is_active:boolean; allow_in_person_payment:boolean|null };
 type Booking = { id:string; customer_name:string; booking_date:string; booking_time:string; status:string; price:number; receipt_url:string|null; payment_method:string|null; services?:{name:string}|null };
 type Rule = { weekday:number; open_time:string; close_time:string; slot_min:number; is_active:boolean };
 type Block = { id:string; start_datetime:string; end_datetime:string; reason:string|null };
@@ -19,6 +19,7 @@ type Profile = { id:string; business_id:string; display_name:string; specialty:s
 const weekdays=["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
 const defaultRules:Rule[]=weekdays.map((_,weekday)=>({weekday,open_time:"09:00",close_time:"18:00",slot_min:20,is_active:weekday!==0}));
 const time=(value:string)=>value.slice(0,5);
+const todayLocal=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
 
 export default function Profissional() {
   const [profile,setProfile]=useState<Profile|null>(null);
@@ -29,7 +30,7 @@ export default function Profissional() {
   const [error,setError]=useState("");
   const [busy,setBusy]=useState(false);
   const [loading,setLoading]=useState(true);
-  const [newService,setNewService]=useState({name:"",description:"",duration_min:30,price:0});
+  const [newService,setNewService]=useState({name:"",description:"",duration_min:30,price:0,allow_in_person_payment:false});
   const [editingServiceId,setEditingServiceId]=useState("");
   const [block,setBlock]=useState({start_datetime:"",end_datetime:"",reason:"Indisponível"});
   const [manual,setManual]=useState({serviceId:"",name:"",phone:"",date:"",time:""});
@@ -47,9 +48,9 @@ export default function Profissional() {
       if(prof.error) throw prof.error;
       const p=prof.data as Profile;
       const results=await Promise.all([
-        premiumDb.from("services").select("id,name,description,duration_min,price,is_active").eq("professional_id",id).order("name"),
+        premiumDb.from("services").select("id,name,description,duration_min,price,is_active,allow_in_person_payment").eq("professional_id",id).order("name"),
         premiumDb.from("bookings").select("id,customer_name,booking_date,booking_time,status,price,receipt_url,payment_method,services(name)")
-          .eq("professional_id",id).gte("booking_date",new Date().toISOString().slice(0,10)).order("booking_date").order("booking_time").limit(100),
+          .eq("professional_id",id).gte("booking_date",todayLocal()).order("booking_date").order("booking_time").limit(100),
         premiumDb.from("availability_rules").select("weekday,open_time,close_time,slot_min,is_active").eq("professional_id",id).order("weekday"),
         premiumDb.from("blocks").select("id,start_datetime,end_datetime,reason").eq("professional_id",id).gte("end_datetime",new Date().toISOString()).order("start_datetime"),
       ]);
@@ -76,15 +77,16 @@ export default function Profissional() {
       const payload={
         name:newService.name.trim(),description:newService.description.trim()||null,
         duration_min:newService.duration_min,price:newService.price,
+        allow_in_person_payment:newService.allow_in_person_payment,
       };
       const {error:err}=editingServiceId
         ? await premiumDb.from("services").update(payload).eq("id",editingServiceId).eq("professional_id",profile.id)
         : await premiumDb.from("services").insert({
           ...payload,business_id:profile.business_id,professional_id:profile.id,
-          is_active:true,allow_in_person_payment:false,
+          is_active:true,
         });
       if(err) throw err;
-      setNewService({name:"",description:"",duration_min:30,price:0});
+      setNewService({name:"",description:"",duration_min:30,price:0,allow_in_person_payment:false});
       setEditingServiceId("");
       toast.success(editingServiceId?"Serviço atualizado":"Serviço cadastrado");
       await load();
@@ -241,7 +243,7 @@ export default function Profissional() {
           <Card><CardHeader><CardTitle>Meus serviços</CardTitle><CardDescription>Seus preços e serviços não alteram os dos outros profissionais.</CardDescription></CardHeader>
             <CardContent className="space-y-2">{services.map(s=><div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
               <div><p className="font-medium">{s.name}</p><p className="text-sm text-muted-foreground">{s.duration_min} min · {formatBRL(Number(s.price))}</p></div>
-              <div className="flex gap-2"><Button variant="outline" size="sm" disabled={busy} onClick={()=>{setEditingServiceId(s.id);setNewService({name:s.name,description:s.description||"",duration_min:s.duration_min,price:Number(s.price)});}}>Editar</Button><Button variant="outline" size="sm" disabled={busy} onClick={()=>toggleService(s)}>{s.is_active?"Desativar":"Ativar"}</Button></div>
+              <div className="flex gap-2"><Button variant="outline" size="sm" disabled={busy} onClick={()=>{setEditingServiceId(s.id);setNewService({name:s.name,description:s.description||"",duration_min:s.duration_min,price:Number(s.price),allow_in_person_payment:Boolean(s.allow_in_person_payment)});}}>Editar</Button><Button variant="outline" size="sm" disabled={busy} onClick={()=>toggleService(s)}>{s.is_active?"Desativar":"Ativar"}</Button></div>
             </div>)}</CardContent>
           </Card>
           <Card><CardHeader><CardTitle>{editingServiceId?"Editar serviço":"Adicionar serviço"}</CardTitle></CardHeader><CardContent>
@@ -250,6 +252,7 @@ export default function Profissional() {
               <div><Label htmlFor="sDesc">Descrição</Label><Input id="sDesc" value={newService.description} onChange={e=>setNewService(v=>({...v,description:e.target.value}))}/></div>
               <div><Label htmlFor="sDuration">Duração (minutos)</Label><Input id="sDuration" type="number" min={5} max={720} required value={newService.duration_min} onChange={e=>setNewService(v=>({...v,duration_min:Number(e.target.value)}))}/></div>
               <div><Label htmlFor="sPrice">Preço (R$)</Label><Input id="sPrice" type="number" min={0.01} step={0.01} required value={newService.price} onChange={e=>setNewService(v=>({...v,price:Number(e.target.value)}))}/></div>
+              <div className="flex items-center gap-3 sm:col-span-2"><Switch checked={newService.allow_in_person_payment} onCheckedChange={checked=>setNewService(v=>({...v,allow_in_person_payment:checked}))} aria-label="Permitir pagamento presencial" /><span className="text-sm">Permitir pagamento presencial</span></div>
               <div className="flex flex-wrap gap-2 sm:col-span-2"><Button type="submit" disabled={busy}>{editingServiceId?"Atualizar serviço":"Salvar serviço"}</Button>{editingServiceId&&<Button type="button" variant="outline" onClick={()=>{setEditingServiceId("");setNewService({name:"",description:"",duration_min:30,price:0});}}>Cancelar edição</Button>}</div>
             </form>
           </CardContent></Card>
@@ -262,6 +265,7 @@ export default function Profissional() {
                 <Switch checked={r.is_active} onCheckedChange={checked=>setRules(v=>v.map((x,j)=>j===i?{...x,is_active:checked}:x))} aria-label={`Atender ${weekdays[r.weekday]}`}/>
                 <Input aria-label={`Abertura ${weekdays[r.weekday]}`} type="time" value={time(r.open_time)} onChange={e=>setRules(v=>v.map((x,j)=>j===i?{...x,open_time:e.target.value}:x))} />
                 <Input aria-label={`Fechamento ${weekdays[r.weekday]}`} type="time" value={time(r.close_time)} onChange={e=>setRules(v=>v.map((x,j)=>j===i?{...x,close_time:e.target.value}:x))} />
+                <div className="sm:col-span-4 flex items-center gap-2"><Label htmlFor={`step-${r.weekday}`}>Intervalo entre horários (min)</Label><Input id={`step-${r.weekday}`} className="w-24" type="number" min={5} max={240} step={5} value={r.slot_min} onChange={e=>setRules(v=>v.map((x,j)=>j===i?{...x,slot_min:Number(e.target.value)}:x))} /></div>
               </div>)}
               <Button disabled={busy} onClick={saveRules}>Salvar horários da semana</Button>
             </CardContent>
