@@ -17,7 +17,7 @@ AS $$
 DECLARE v_business uuid; v_professional uuid;
 BEGIN
   IF TG_OP='UPDATE' THEN
-    IF auth.uid() IS NOT NULL AND
+    IF auth.uid() IS NOT NULL AND NOT private.has_role(auth.uid(),'admin') AND
       (NEW.business_id IS DISTINCT FROM OLD.business_id
         OR NEW.professional_id IS DISTINCT FROM OLD.professional_id
         OR NEW.user_id IS DISTINCT FROM OLD.user_id) THEN
