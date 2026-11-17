@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 type Service = { id:string; name:string; description:string|null; duration_min:number; price:number; is_active:boolean; allow_in_person_payment:boolean|null };
-type Booking = { id:string; customer_name:string; booking_date:string; booking_time:string; status:string; price:number; receipt_url:string|null; payment_method:string|null; services?:{name:string}|null };
+type Booking = { id:string; customer_name:string; customer_whatsapp:string; booking_date:string; booking_time:string; status:string; price:number; receipt_url:string|null; payment_method:string|null; services?:{name:string}|null };
 type Rule = { weekday:number; open_time:string; close_time:string; slot_min:number; is_active:boolean };
 type Block = { id:string; start_datetime:string; end_datetime:string; reason:string|null };
 type Profile = { id:string; business_id:string; display_name:string; specialty:string|null };
@@ -50,7 +50,7 @@ export default function Profissional() {
       const p=prof.data as Profile;
       const results=await Promise.all([
         premiumDb.from("services").select("id,name,description,duration_min,price,is_active,allow_in_person_payment").eq("professional_id",id).order("name"),
-        premiumDb.from("bookings").select("id,customer_name,booking_date,booking_time,status,price,receipt_url,payment_method,services(name)")
+        premiumDb.from("bookings").select("id,customer_name,customer_whatsapp,booking_date,booking_time,status,price,receipt_url,payment_method,services(name)")
           .eq("professional_id",id).gte("booking_date",todayLocal()).order("booking_date").order("booking_time").limit(100),
         premiumDb.from("availability_rules").select("weekday,open_time,close_time,slot_min,is_active").eq("professional_id",id).order("weekday"),
         premiumDb.from("blocks").select("id,start_datetime,end_datetime,reason").eq("professional_id",id).gte("end_datetime",new Date().toISOString()).order("start_datetime"),
@@ -245,6 +245,7 @@ export default function Profissional() {
               <div><p className="font-semibold">{b.customer_name}</p>
                 <p className="text-sm text-muted-foreground">{b.services?.name||"Serviço"} · {b.booking_date.split("-").reverse().join("/")} às {time(b.booking_time)}</p>
                 <p className="text-sm">{formatBRL(Number(b.price))} · <Badge variant="outline">{b.status}</Badge></p>
+                {b.customer_whatsapp&&<a className="text-sm text-primary underline" target="_blank" rel="noopener noreferrer" href={`https://wa.me/${b.customer_whatsapp.replace(/\D/g,"").length>11?b.customer_whatsapp.replace(/\D/g,""):"55"+b.customer_whatsapp.replace(/\D/g,"")}`}>Conversar por WhatsApp</a>}
               </div>
               <div className="flex flex-wrap items-center gap-2">
 {b.receipt_url&&<Button size="sm" variant="outline" disabled={busy} onClick={()=>void viewReceipt(b.receipt_url!)}>Ver comprovante</Button>}
