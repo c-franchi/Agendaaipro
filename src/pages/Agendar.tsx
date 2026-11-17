@@ -240,7 +240,9 @@ export default function Agendar() {
       const dateStr = formatLocalDate(selectedDate);
 
       if (rescheduleId) {
-        const { error } = await supabase.rpc("reschedule_booking", { p_booking_id: rescheduleId, p_booking_date: dateStr, p_booking_time: selectedTime });
+        const { error } = selectedService.professional_id
+          ? await premiumDb.rpc("reschedule_booking_v2", { p_booking_id: rescheduleId, p_professional_id: selectedService.professional_id, p_booking_date: dateStr, p_booking_time: selectedTime })
+          : await supabase.rpc("reschedule_booking", { p_booking_id: rescheduleId, p_booking_date: dateStr, p_booking_time: selectedTime });
         if (error) throw error;
         toast.success("Agendamento reagendado com sucesso");
         navigate("/cliente/agendamentos");
@@ -342,7 +344,7 @@ export default function Agendar() {
                   setSelectedDate(date);
                   if (date) setStep(3);
                 }}
-                disabled={(date) => formatLocalDate(date) < formatLocalDate(new Date()) || date.getDay() === 0}
+                disabled={(date) => formatLocalDate(date) < formatLocalDate(new Date())}
                 className="rounded-md border border-border"
               />
               <Button variant="outline" className="mt-4" onClick={() => setStep(1)}>
@@ -410,6 +412,7 @@ export default function Agendar() {
               <AlertDialogDescription>
                 <div className="space-y-2 mt-4">
                   <p><strong>Serviço:</strong> {selectedService?.name}</p>
+                    {selectedService?.professional_id && <p><strong>Profissional:</strong> {professionals.find(p=>p.id===selectedService.professional_id)?.display_name || "Selecionado"}</p>}
                   <p><strong>Data:</strong> {selectedDate?.toLocaleDateString('pt-BR')}</p>
                   <p><strong>Horário:</strong> {selectedTime}</p>
                   <p><strong>Valor:</strong> R$ {Number(selectedService?.price || 0).toFixed(2)}</p>
