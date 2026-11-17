@@ -10,7 +10,7 @@
 ## O que foi desenvolvido no sistema-base
 1. Esquema de negócios, permissões e assinaturas, profissionais e convites por e-mail confirmado com token aleatório e validade, limite de vagas no Postgres.
 2. RPCs de horários/agendamentos/reagendamentos v2, conflitos por pessoa, gravação de horários por profissional, bloqueios e serviços individuais.
-3. Área `/admin/equipe` para o titular; `/profissional/convite`, `/profissional`, `/profissional/chat`, `/profissional/portfolio`, `/profissional/gestao`; integração do agendamento público com o profissional responsável; agendamento manual pela RPC `professional_create_manual_booking` (não lança cobrança), edição do próprio perfil, intervalo de horários, pagamento presencial por serviço e contato do cliente via WhatsApp.
+3. Área `/admin/equipe` para o titular; `/profissional/convite`, `/profissional`, `/profissional/chat`, `/profissional/portfolio`, `/profissional/gestao`; integração do agendamento público com o profissional responsável; agendamento manual pela RPC `professional_create_manual_booking` (não lança cobrança), edição do próprio perfil, intervalo de horários, pagamento presencial por serviço, contato via WhatsApp e listagem dos **próprios clientes** baseada em até 500 reservas com RLS.
 4. Tabelas e RPCs de estoque, movimentações, vendas, despesas, insumos por serviço, baixa após conclusão e custo histórico. Cálculos apresentados como **estimativa**, não lucro líquido.
 5. Chat e portfólio independentes; acesso aos comprovantes do próprio profissional. Mantidos fluxos legados por compatibilidade.
 6. Workflow GitHub Actions de lint estático/TypeScript/Vite; **`package-lock.json` original não satisfaz `npm ci`** e fallback temporário permite diagnóstico. Precisa reconciliar e fixar lockfile.
