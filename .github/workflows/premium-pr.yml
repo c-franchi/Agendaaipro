@@ -52,4 +52,5 @@ jobs:
           test -f supabase/migrations/20261117194500_professional_receipt_access.sql
           test -f supabase/migrations/20261117200000_professional_manual_booking.sql
           test -f supabase/migrations/20261117201500_professional_profile_edit.sql
+          test -f supabase/tests/premium_schema_smoke.sql
           echo "Static file check passed. Actual Postgres migration/RLS tests still required."
