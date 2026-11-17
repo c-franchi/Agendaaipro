@@ -57,7 +57,7 @@ function GestaoPremiumContent({owner=false}:{owner?:boolean}){
       if(prof.error) throw prof.error;
       const businessId=String(prof.data.business_id);
       const [ent,p,s,e,svc,cons,b,used,m,people]=await Promise.all([
-        premiumDb.from("business_entitlements").select("plan_key,status,seat_limit,valid_until").eq("business_id",businessId).maybeSingle(),
+        premiumDb.rpc("my_business_entitlement"),
         premiumDb.from("products").select("id,professional_id,name,unit,stock_quantity,min_stock,sale_price,unit_cost,is_active").eq("business_id",businessId).order("name"),
         premiumDb.from("sales").select("id,professional_id,status,total,created_at").eq("business_id",businessId).order("created_at",{ascending:false}).limit(100),
         premiumDb.from("expenses").select("id,professional_id,category,description,amount,paid_at,voided_at").eq("business_id",businessId).order("paid_at",{ascending:false}).limit(100),
@@ -68,9 +68,9 @@ function GestaoPremiumContent({owner=false}:{owner?:boolean}){
         premiumDb.from("stock_movements").select("id,product_id,quantity_delta,reason,created_at").eq("business_id",businessId).order("created_at",{ascending:false}).limit(100),
         premiumDb.from("professional_profiles").select("id,display_name").eq("business_id",businessId),
       ]);
-      for(const response of [p,s,e,svc,cons,b,used,m,people]) if(response.error) throw response.error;
+      for(const response of [ent,p,s,e,svc,cons,b,used,m,people]) if(response.error) throw response.error;
       // Professional não vê assinatura comercial alheia: somente o titular pode consultá-la.
-      setEntitlement((ent.data||null) as EntitlementRow|null);
+      setEntitlement((Array.isArray(ent.data)?ent.data[0]:null) as EntitlementRow|null);
       setBusinessId(businessId);setProfessionalId(professionalId);
       setProducts((p.data||[]) as Product[]);setSales((s.data||[]) as Sale[]);
       setExpenses((e.data||[]) as Expense[]);setServices((svc.data||[]) as Service[]);
@@ -96,11 +96,10 @@ function GestaoPremiumContent({owner=false}:{owner?:boolean}){
     if(e) throw e;
   };
   const owns=(id:string)=>id===professionalId;
-  const inventoryEnabled=entitlement?["pro","premium"].includes(entitlement.plan_key)
+  const inventoryEnabled=Boolean(entitlement&&["pro","premium"].includes(entitlement.plan_key)
     &&["active","trialing"].includes(entitlement.status)
-    &&(!entitlement.valid_until||new Date(entitlement.valid_until)>new Date()):!owner;
-  // Mesmo quando o status do adicional não é visível via RLS, a RPC valida o direito no servidor.
-  const premiumEnabled=entitlement?.plan_key==="premium"||!owner;
+    &&(!entitlement.valid_until||new Date(entitlement.valid_until)>new Date()));
+  const premiumEnabled=inventoryEnabled&&entitlement?.plan_key==="premium";
   const stats=useMemo(()=>{
     const paidSales=sales.filter(s=>s.status==="paid").reduce((v,s)=>v+decimal(s.total),0);
     const activeExpenses=expenses.filter(e=>!e.voided_at).reduce((v,e)=>v+decimal(e.amount),0);
