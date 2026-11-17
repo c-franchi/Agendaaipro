@@ -59,6 +59,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Scissors, label: "Serviços", path: "/admin/servicos" },
     { icon: Images, label: "Portfólio", path: "/admin/portfolio" },
     { icon: DollarSign, label: "Financeiro", path: "/admin/financeiro" },
+    { icon: Users, label: "Equipe", path: "/admin/equipe" },
+    { icon: DollarSign, label: "Produtos e caixa", path: "/admin/premium" },
     { icon: Settings, label: "Configurações", path: "/admin/configuracoes" },
   ];
 

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { premiumDb, type ProfessionalPublic } from "@/lib/premium-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -12,7 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { Json } from "@/integrations/supabase/types";
 
 type TimeBlock = { start_min: number; duration_min: number; blocked: boolean };
-type Service = { id: string; name: string; description: string | null; duration_min: number; price: number; interleaved_blocks: Json; allow_in_person_payment: boolean | null };
+type Service = { id: string; name: string; description: string | null; duration_min: number; price: number; interleaved_blocks: Json; allow_in_person_payment: boolean | null; professional_id: string | null };
 
 function isTimeBlock(value: Json): value is TimeBlock {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -27,6 +28,7 @@ export default function Agendar() {
   const requestedServiceId = searchParams.get("service");
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<Service[]>([]);
+  const [professionals, setProfessionals] = useState<ProfessionalPublic[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -68,11 +70,12 @@ export default function Agendar() {
 
   // Carrega serviços ativos para o agendamento
   async function loadServices() {
-    const { data } = await supabase
-      .from("services")
-      .select("*")
-      .eq("is_active", true);
-    setServices(data || []);
+    const [{ data }, people] = await Promise.all([
+      premiumDb.from("services").select("*").eq("is_active", true),
+      premiumDb.rpc("list_booking_professionals"),
+    ]);
+    setServices((data || []) as Service[]);
+    if (!people.error) setProfessionals((people.data || []) as ProfessionalPublic[]);
     if (requestedServiceId) {
       const requested = (data || []).find((service) => service.id === requestedServiceId);
       if (requested) { setSelectedService(requested); setStep(2); }
@@ -87,12 +90,12 @@ export default function Agendar() {
     const dateStr = formatLocalDate(selectedDate);
 
     // Buscar regras de disponibilidade
-    const { data: rules, error: rulesError } = await supabase
-      .from("availability_rules")
-      .select("*")
-      .eq("weekday", weekday)
-      .eq("is_active", true)
-      .maybeSingle();
+    let ruleQuery = premiumDb.from("availability_rules")
+      .select("*").eq("weekday", weekday).eq("is_active", true);
+    ruleQuery = selectedService.professional_id
+      ? ruleQuery.eq("professional_id", selectedService.professional_id)
+      : ruleQuery.is("professional_id", null);
+    const { data: rules, error: rulesError } = await ruleQuery.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
     if (rulesError) {
       if (requestId !== slotsRequest.current) return;
@@ -110,7 +113,9 @@ export default function Agendar() {
     }
 
     // Buscar agendamentos do dia com informações do serviço
-    const { data: bookings, error: bookingsError } = await supabase.rpc("get_booked_slots", { p_booking_date: dateStr });
+    const { data: bookings, error: bookingsError } = selectedService.professional_id
+      ? await premiumDb.rpc("get_booked_slots_v2", { p_booking_date: dateStr, p_professional_id: selectedService.professional_id })
+      : await supabase.rpc("get_booked_slots", { p_booking_date: dateStr });
     if (bookingsError) {
       if (requestId !== slotsRequest.current) return;
       toast.error("Erro ao carregar agendamentos do dia");
@@ -235,7 +240,9 @@ export default function Agendar() {
       const dateStr = formatLocalDate(selectedDate);
 
       if (rescheduleId) {
-        const { error } = await supabase.rpc("reschedule_booking", { p_booking_id: rescheduleId, p_booking_date: dateStr, p_booking_time: selectedTime });
+        const { error } = selectedService.professional_id
+          ? await premiumDb.rpc("reschedule_booking_v2", { p_booking_id: rescheduleId, p_professional_id: selectedService.professional_id, p_booking_date: dateStr, p_booking_time: selectedTime })
+          : await supabase.rpc("reschedule_booking", { p_booking_id: rescheduleId, p_booking_date: dateStr, p_booking_time: selectedTime });
         if (error) throw error;
         toast.success("Agendamento reagendado com sucesso");
         navigate("/cliente/agendamentos");
@@ -243,13 +250,16 @@ export default function Agendar() {
       }
 
       const phone = userProfile.phone.replace(/\D/g, "");
-      const { data, error } = await supabase.rpc("create_booking", {
+      const params = {
         p_service_id: selectedService.id,
         p_customer_name: userProfile.full_name,
         p_customer_whatsapp: phone,
         p_booking_date: dateStr,
         p_booking_time: selectedTime,
-      });
+      };
+      const { data, error } = selectedService.professional_id
+        ? await premiumDb.rpc("create_booking_v2", { ...params, p_professional_id: selectedService.professional_id })
+        : await supabase.rpc("create_booking", params);
 
       if (error) throw error;
       const result = data as { booking_id: string; access_token: string; requires_payment: boolean };
@@ -314,6 +324,7 @@ export default function Agendar() {
                       <div>
                         <h3 className="font-bold text-foreground">{service.name}</h3>
                         <p className="text-sm text-muted-foreground">{service.duration_min} minutos</p>
+                        {service.professional_id && <p className="text-sm text-primary">Profissional: {professionals.find(p=>p.id===service.professional_id)?.display_name || "Atendimento"}</p>}
                       </div>
                       <p className="text-xl font-bold text-primary">R$ {Number(service.price).toFixed(2)}</p>
                     </div>
@@ -333,7 +344,7 @@ export default function Agendar() {
                   setSelectedDate(date);
                   if (date) setStep(3);
                 }}
-                disabled={(date) => formatLocalDate(date) < formatLocalDate(new Date()) || date.getDay() === 0}
+                disabled={(date) => formatLocalDate(date) < formatLocalDate(new Date())}
                 className="rounded-md border border-border"
               />
               <Button variant="outline" className="mt-4" onClick={() => setStep(1)}>
@@ -366,6 +377,7 @@ export default function Agendar() {
                   <h3 className="font-bold mb-2 text-foreground">Resumo do Agendamento</h3>
                   <p className="text-sm text-muted-foreground">
                     <strong>Serviço:</strong> {selectedService?.name}
+                    {selectedService?.professional_id && <span> · {professionals.find(p=>p.id===selectedService.professional_id)?.display_name || "Profissional selecionado"}</span>}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     <strong>Data:</strong> {selectedDate?.toLocaleDateString('pt-BR')}
@@ -400,6 +412,7 @@ export default function Agendar() {
               <AlertDialogDescription>
                 <div className="space-y-2 mt-4">
                   <p><strong>Serviço:</strong> {selectedService?.name}</p>
+                    {selectedService?.professional_id && <p><strong>Profissional:</strong> {professionals.find(p=>p.id===selectedService.professional_id)?.display_name || "Selecionado"}</p>}
                   <p><strong>Data:</strong> {selectedDate?.toLocaleDateString('pt-BR')}</p>
                   <p><strong>Horário:</strong> {selectedTime}</p>
                   <p><strong>Valor:</strong> R$ {Number(selectedService?.price || 0).toFixed(2)}</p>
