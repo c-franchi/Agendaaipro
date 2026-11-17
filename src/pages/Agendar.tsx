@@ -95,7 +95,7 @@ export default function Agendar() {
     ruleQuery = selectedService.professional_id
       ? ruleQuery.eq("professional_id", selectedService.professional_id)
       : ruleQuery.is("professional_id", null);
-    const { data: rules, error: rulesError } = await ruleQuery.maybeSingle();
+    const { data: rules, error: rulesError } = await ruleQuery.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
     if (rulesError) {
       if (requestId !== slotsRequest.current) return;
