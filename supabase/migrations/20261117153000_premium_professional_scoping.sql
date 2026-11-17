@@ -45,7 +45,7 @@ BEGIN
   INSERT INTO public.business_members(business_id,user_id,role,status)
   VALUES(v_business,auth.uid(),'owner','active');
   INSERT INTO public.professional_profiles(business_id,member_id,display_name,specialty)
-  SELECT v_business,m.id,p_name,'Profissional titular' FROM public.business_members m
+  SELECT v_business,m.id,left(btrim(p_name),100),'Profissional titular' FROM public.business_members m
   WHERE m.business_id=v_business AND m.role='owner'
   RETURNING id INTO v_professional;
   -- Migra apenas linhas sem escopo; não apaga nem reescreve valores da agenda.
@@ -65,13 +65,20 @@ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
 AS $$
 DECLARE v_business uuid; v_professional uuid;
 BEGIN
-  IF TG_TABLE_NAME = 'bookings' AND NEW.service_id IS NOT NULL THEN
-    SELECT s.business_id,s.professional_id INTO v_business,v_professional
-    FROM public.services s WHERE s.id=NEW.service_id;
-  ELSIF NEW.professional_id IS NOT NULL THEN
+  IF TG_TABLE_NAME = 'bookings' THEN
+    IF NEW.service_id IS NOT NULL THEN
+      SELECT s.business_id,s.professional_id INTO v_business,v_professional
+      FROM public.services s WHERE s.id=NEW.service_id;
+    END IF;
+    IF NEW.service_id IS NOT NULL AND v_business IS NULL THEN
+      RAISE EXCEPTION 'Serviço de agendamento sem vínculo com o negócio';
+    END IF;
+  END IF;
+  IF v_business IS NULL AND NEW.professional_id IS NOT NULL THEN
     SELECT p.business_id,p.id INTO v_business,v_professional
     FROM public.professional_profiles p WHERE p.id=NEW.professional_id;
-  ELSIF auth.uid() IS NOT NULL THEN
+  END IF;
+  IF v_business IS NULL AND auth.uid() IS NOT NULL THEN
     SELECT p.business_id,p.id INTO v_business,v_professional
     FROM public.professional_profiles p
     JOIN public.business_members m ON m.id=p.member_id
