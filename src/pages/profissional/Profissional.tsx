@@ -253,7 +253,7 @@ export default function Profissional() {
               <div><Label htmlFor="sDuration">Duração (minutos)</Label><Input id="sDuration" type="number" min={5} max={720} required value={newService.duration_min} onChange={e=>setNewService(v=>({...v,duration_min:Number(e.target.value)}))}/></div>
               <div><Label htmlFor="sPrice">Preço (R$)</Label><Input id="sPrice" type="number" min={0.01} step={0.01} required value={newService.price} onChange={e=>setNewService(v=>({...v,price:Number(e.target.value)}))}/></div>
               <div className="flex items-center gap-3 sm:col-span-2"><Switch checked={newService.allow_in_person_payment} onCheckedChange={checked=>setNewService(v=>({...v,allow_in_person_payment:checked}))} aria-label="Permitir pagamento presencial" /><span className="text-sm">Permitir pagamento presencial</span></div>
-              <div className="flex flex-wrap gap-2 sm:col-span-2"><Button type="submit" disabled={busy}>{editingServiceId?"Atualizar serviço":"Salvar serviço"}</Button>{editingServiceId&&<Button type="button" variant="outline" onClick={()=>{setEditingServiceId("");setNewService({name:"",description:"",duration_min:30,price:0});}}>Cancelar edição</Button>}</div>
+              <div className="flex flex-wrap gap-2 sm:col-span-2"><Button type="submit" disabled={busy}>{editingServiceId?"Atualizar serviço":"Salvar serviço"}</Button>{editingServiceId&&<Button type="button" variant="outline" onClick={()=>{setEditingServiceId("");setNewService({name:"",description:"",duration_min:30,price:0,allow_in_person_payment:false});}}>Cancelar edição</Button>}</div>
             </form>
           </CardContent></Card>
         </TabsContent>
