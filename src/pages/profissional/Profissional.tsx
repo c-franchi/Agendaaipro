@@ -56,7 +56,7 @@ export default function Profissional() {
       setServices((results[0].data||[]) as Service[]);
       setBookings((results[1].data||[]) as unknown as Booking[]);
       const saved=(results[2].data||[]) as Rule[];
-      setRules(defaultRules.map(d=>saved.filter(s=>s.weekday===d.weekday).at(-1)||d));
+      setRules(defaultRules.map(d=>{ const matches=saved.filter(s=>s.weekday===d.weekday); return matches[matches.length-1]||d; }));
       setBlocks((results[3].data||[]) as Block[]);
       setError("");
     }catch(e){
